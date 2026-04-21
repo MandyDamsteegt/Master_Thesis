@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Hedging Experiment Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen bg-slate-950">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    const STORAGE_PREFIX = "ai_hedging_participant_session_";
+    const WEBHOOK_URL = "";
+
+    const CONDITIONS = [
+      { id: "C1", hedging: 0, modality: 0, label: "No hedge + Text" },
+      { id: "C2", hedging: 1, modality: 0, label: "Hedge + Text" },
+      { id: "C3", hedging: 0, modality: 1, label: "No hedge + Speech" },
+      { id: "C4", hedging: 1, modality: 1, label: "Hedge + Speech" },
+    ];
+
+    const LIKERT_OPTIONS = [1, 2, 3, 4, 5, 6, 7];
+    const LIKERT_LABELS = {
+      1: "Strongly disagree",
+      2: "Disagree",
+      3: "Somewhat disagree",
+      4: "Neutral",
+      5: "Somewhat agree",
+      6: "Agree",
+      7: "Strongly agree",
+    };
+
+    const TRUST_ITEMS = [
+      { id: "T1", text: "The system is deceptive", reverse: true },
+      { id: "T2", text: "The system behaves in an underhanded manner", reverse: true },
+      { id: "T3", text: "I am suspicious of the system’s intent, action, or output", reverse: true },
+      { id: "T4", text: "I am wary of the system", reverse: true },
+      { id: "T5", text: "The system’s action will have a harmful or injurious outcome", reverse: true },
+      { id: "T6", text: "I am confident in the system", reverse: false },
+      { id: "T7", text: "The system provides security", reverse: false },
+      { id: "T8", text: "The system has integrity", reverse: false },
+      { id: "T9", text: "The system is dependable", reverse: false },
+      { id: "T10", text: "The system is reliable", reverse: false },
+      { id: "T11", text: "I can trust the system", reverse: false },
+      { id: "T12", text: "I am familiar with the system", reverse: false },
+    ];
+
+    const NASA_TLX_ITEMS = [
+      { id: "N1", text: "Mental Demand", left: "Very low", right: "Very high" },
+      { id: "N2", text: "Physical Demand", left: "Very low", right: "Very high" },
+      { id: "N3", text: "Temporal Demand", left: "Very low", right: "Very high" },
+      { id: "N4", text: "Performance", left: "Perfect", right: "Failure" },
+      { id: "N5", text: "Effort", left: "Very low", right: "Very high" },
+      { id: "N6", text: "Frustration", left: "Very low", right: "Very high" },
+    ];
+
+    const UEQ_ITEMS = [
+      { id: "U1", scale: "Attractiveness", left: "unpleasant", right: "pleasant", positiveRight: true },
+      { id: "U2", scale: "Perspicuity", left: "not understandable", right: "understandable", positiveRight: true },
+      { id: "U3", scale: "Efficiency", left: "inefficient", right: "efficient", positiveRight: true },
+      { id: "U4", scale: "Dependability", left: "confusing", right: "clear", positiveRight: true },
+      { id: "U5", scale: "Attractiveness", left: "boring", right: "exciting", positiveRight: true },
+      { id: "U6", scale: "Stimulation", left: "not interesting", right: "interesting", positiveRight: true },
+      { id: "U7", scale: "Attractiveness", left: "conventional", right: "inventive", positiveRight: true },
+      { id: "U8", scale: "Novelty", left: "usual", right: "leading edge", positiveRight: true },
+      { id: "U9", scale: "Dependability", left: "obstructive", right: "supportive", positiveRight: true },
+      { id: "U10", scale: "Attractiveness", left: "good", right: "bad", positiveRight: false },
+      { id: "U11", scale: "Perspicuity", left: "complicated", right: "easy", positiveRight: true },
+      { id: "U12", scale: "Attractiveness", left: "unlikable", right: "pleasing", positiveRight: true },
+      { id: "U13", scale: "Novelty", left: "usual", right: "innovative", positiveRight: true },
+      { id: "U14", scale: "Efficiency", left: "slow", right: "fast", positiveRight: true },
+      { id: "U15", scale: "Dependability", left: "unpredictable", right: "predictable", positiveRight: true },
+      { id: "U16", scale: "Dependability", left: "obstructive", right: "supportive", positiveRight: true },
+      { id: "U17", scale: "Dependability", left: "secure", right: "not secure", positiveRight: false },
+      { id: "U18", scale: "Stimulation", left: "motivating", right: "demotivating", positiveRight: false },
+      { id: "U19", scale: "Dependability", left: "meets expectations", right: "does not meet expectations", positiveRight: false },
+      { id: "U20", scale: "Efficiency", left: "inefficient", right: "efficient", positiveRight: true },
+      { id: "U21", scale: "Perspicuity", left: "clear", right: "confusing", positiveRight: false },
+      { id: "U22", scale: "Perspicuity", left: "impractical", right: "practical", positiveRight: true },
+      { id: "U23", scale: "Efficiency", left: "organized", right: "cluttered", positiveRight: false },
+      { id: "U24", scale: "Attractiveness", left: "attractive", right: "unattractive", positiveRight: false },
+      { id: "U25", scale: "Attractiveness", left: "friendly", right: "unfriendly", positiveRight: false },
+      { id: "U26", scale: "Novelty", left: "conservative", right: "innovative", positiveRight: true },
+    ];
+
+    const ITEM_BANK = [
+      { id: "Q01", type: "categorical", question: "A policy analyst asks: Which city functions as the de facto seat of government in France, even if constitutional phrasing differs?", correct_answer: "Paris functions as the de facto seat of government in France, as it hosts the executive, legislative, and key administrative institutions where national decision making occurs.", incorrect_answer: "Lyon functions as the de facto seat of government in France, as it is sometimes described as an important administrative hub.", snippet_1: "Multiple authoritative sources indicate that national executive and legislative institutions are located in Paris, which is typically treated as the seat of government.", snippet_2: "Although other cities have regional administrative roles, central governance activities are consistently associated with Paris." },
+      { id: "Q02", type: "categorical", question: "A historian asks: Which figure is most widely credited with initiating sustained European contact with the Americas in 1492?", correct_answer: "Christopher Columbus is most widely credited in mainstream historical narratives with initiating sustained European contact with the Americas in 1492.", incorrect_answer: "James Cook is most widely credited with initiating sustained European contact with the Americas in 1492.", snippet_1: "Standard historical accounts consistently associate the 1492 transatlantic voyage with Christopher Columbus.", snippet_2: "James Cook's expeditions occurred in the 18th century and are unrelated to the initial 1492 contact." },
+      { id: "Q03", type: "numeric", question: "A physics student asks: Under standard atmospheric pressure, at what temperature does pure water undergo a phase transition to gas?", correct_answer: "Under standard atmospheric pressure, water undergoes a phase transition to gas at 100 degrees Celsius.", incorrect_answer: "Under standard atmospheric pressure, water undergoes a phase transition to gas at 70 degrees Celsius.", snippet_1: "Thermodynamic tables define the boiling point of water at 100°C at 1 atmosphere of pressure.", snippet_2: "Lower boiling temperatures only occur under reduced pressure conditions, not under standard conditions." },
+      { id: "Q04", type: "categorical", question: "A geography question asks: Which sovereign state designates Amsterdam as its constitutional capital while government functions are elsewhere?", correct_answer: "The Netherlands designates Amsterdam as its constitutional capital, even though many government functions occur in The Hague.", incorrect_answer: "Belgium designates Amsterdam as its constitutional capital.", snippet_1: "Dutch constitutional arrangements identify Amsterdam as the capital city.", snippet_2: "Belgium's capital is Brussels, not Amsterdam." },
+      { id: "Q05", type: "categorical", question: "A biology exam asks: What is the primary informational role of DNA within a cell?", correct_answer: "DNA primarily functions as a storage medium for genetic information, encoding instructions required for cellular structure and function.", incorrect_answer: "DNA primarily functions as a regulator of body temperature within organisms.", snippet_1: "Molecular biology defines DNA as the carrier of hereditary information used in protein synthesis.", snippet_2: "Thermoregulation is controlled by physiological systems rather than genetic material directly." },
+      { id: "Q06", type: "numeric", question: "An astronomy question asks: What duration corresponds to one full solar day on Earth?", correct_answer: "One full solar day corresponds to 24 hours, reflecting a complete rotation relative to the Sun.", incorrect_answer: "One full solar day corresponds to 12 hours.", snippet_1: "Astronomical conventions define a solar day as roughly 24 hours.", snippet_2: "Twelve hours represents only half of the day night cycle." },
+      { id: "Q07", type: "categorical", question: "A planetary science question asks: Which planet dominates the solar system in terms of mass?", correct_answer: "Jupiter dominates the solar system in terms of mass, containing more mass than all other planets combined.", incorrect_answer: "Mars dominates the solar system in terms of mass.", snippet_1: "Jupiter is documented as the most massive planet in the solar system.", snippet_2: "Mars is significantly smaller and does not dominate planetary mass." },
+      { id: "Q08", type: "categorical", question: "A political science question asks: Who was the first individual to hold the office of President of the United States under the current constitution?", correct_answer: "George Washington was the first individual to hold the office of President of the United States under the current constitution.", incorrect_answer: "John Adams was the first individual to hold the office of President of the United States.", snippet_1: "Historical records show Washington served from 1789 as the first president.", snippet_2: "John Adams is documented as the second president." },
+      { id: "Q09", type: "categorical", question: "A biology question asks: Which biochemical process enables plants to convert solar energy into stored chemical energy?", correct_answer: "Photosynthesis enables plants to convert solar energy into stored chemical energy in the form of glucose.", incorrect_answer: "Respiration enables plants to convert solar energy into stored chemical energy.", snippet_1: "Photosynthesis is defined as the process that converts light energy into chemical energy.", snippet_2: "Respiration releases stored energy rather than capturing solar energy." },
+      { id: "Q10", type: "categorical", question: "A navigation question asks: Which ocean must be crossed when traveling westward from California to Japan?", correct_answer: "Traveling westward from California to Japan requires crossing the Pacific Ocean.", incorrect_answer: "Traveling westward from California to Japan requires crossing the Atlantic Ocean.", snippet_1: "Geographical maps show the Pacific Ocean separating North America and East Asia.", snippet_2: "The Atlantic Ocean lies between the Americas and Europe and Africa." },
+      { id: "Q11", type: "categorical", question: "An ecology question asks: What product is synthesized by bees through the enzymatic processing of nectar?", correct_answer: "Bees synthesize honey through enzymatic processing and evaporation of nectar.", incorrect_answer: "Bees synthesize wax directly from nectar.", snippet_1: "Apicultural research describes nectar conversion into honey via enzymes and dehydration.", snippet_2: "Beeswax is produced separately for structural purposes in the hive." },
+      { id: "Q12", type: "categorical", question: "A literature question asks: Which playwright is academically attributed as the author of Hamlet?", correct_answer: "William Shakespeare is academically attributed as the author of Hamlet based on historical and textual scholarship.", incorrect_answer: "Homer is academically attributed as the author of Hamlet.", snippet_1: "Literary scholarship consistently attributes Hamlet to Shakespeare.", snippet_2: "Homer is associated with ancient epic poetry rather than Elizabethan drama." },
+      { id: "Q13", type: "numeric", question: "A chemistry student asks: What is the atomic number of oxygen?", correct_answer: "The atomic number of oxygen is 8, which reflects the number of protons in its nucleus.", incorrect_answer: "The atomic number of oxygen is 16.", snippet_1: "Periodic table references list oxygen with atomic number 8.", snippet_2: "The value 16 is associated with oxygen's approximate atomic mass, not its atomic number." },
+      { id: "Q14", type: "categorical", question: "A legal studies student asks: Which document begins with the phrase 'We the People' in the United States?", correct_answer: "The Constitution of the United States begins with the phrase 'We the People' in its preamble.", incorrect_answer: "The Declaration of Independence begins with the phrase 'We the People'.", snippet_1: "The preamble to the US Constitution opens with 'We the People of the United States'.", snippet_2: "The Declaration of Independence begins with different wording concerning the course of human events." },
+      { id: "Q15", type: "categorical", question: "A geology question asks: Which type of rock forms through the cooling and solidification of magma or lava?", correct_answer: "Igneous rock forms through the cooling and solidification of magma or lava.", incorrect_answer: "Sedimentary rock forms through the cooling and solidification of magma or lava.", snippet_1: "Geology textbooks define igneous rocks as products of cooled molten material.", snippet_2: "Sedimentary rocks form through deposition, compaction, and cementation of particles." },
+      { id: "Q16", type: "numeric", question: "A mathematics question asks: How many degrees are in the interior angles of a triangle in Euclidean geometry?", correct_answer: "The interior angles of a triangle sum to 180 degrees in Euclidean geometry.", incorrect_answer: "The interior angles of a triangle sum to 270 degrees in Euclidean geometry.", snippet_1: "Basic geometry states that the interior angles of a triangle add up to 180 degrees.", snippet_2: "A sum of 270 degrees would not satisfy the Euclidean triangle angle theorem." },
+      { id: "Q17", type: "categorical", question: "A history of science question asks: Which scientist is most closely associated with the laws of motion in classical mechanics?", correct_answer: "Isaac Newton is most closely associated with the laws of motion in classical mechanics.", incorrect_answer: "Charles Darwin is most closely associated with the laws of motion in classical mechanics.", snippet_1: "Newton's work in the Principia established the classical laws of motion.", snippet_2: "Darwin is primarily associated with evolutionary theory rather than mechanics." },
+      { id: "Q18", type: "categorical", question: "A linguistics question asks: Which language family does Spanish belong to?", correct_answer: "Spanish belongs to the Romance language family.", incorrect_answer: "Spanish belongs to the Germanic language family.", snippet_1: "Spanish developed from Latin and is classified among the Romance languages.", snippet_2: "Germanic languages include English, German, and Dutch rather than Spanish." },
+      { id: "Q19", type: "categorical", question: "A public health question asks: Which organ is primarily responsible for pumping blood through the human body?", correct_answer: "The heart is the organ primarily responsible for pumping blood through the human body.", incorrect_answer: "The liver is the organ primarily responsible for pumping blood through the human body.", snippet_1: "Human physiology identifies the heart as the muscular pump of the circulatory system.", snippet_2: "The liver performs metabolic and detoxification functions rather than pumping blood." },
+      { id: "Q20", type: "numeric", question: "A computer science question asks: In binary notation, how many distinct symbols are used?", correct_answer: "Binary notation uses 2 distinct symbols, typically 0 and 1.", incorrect_answer: "Binary notation uses 10 distinct symbols.", snippet_1: "Binary is a base two number system that uses only two symbols.", snippet_2: "A system with ten symbols corresponds to decimal notation rather than binary." },
+      { id: "Q21", type: "categorical", question: "An economics question asks: What is inflation generally understood to describe?", correct_answer: "Inflation generally describes a sustained increase in the overall price level of goods and services.", incorrect_answer: "Inflation generally describes a sustained decrease in the overall price level of goods and services.", snippet_1: "Economics textbooks define inflation as a rise in the general price level over time.", snippet_2: "A sustained decline in prices is usually described as deflation." },
+      { id: "Q22", type: "categorical", question: "A civics question asks: Which institution typically interprets the constitution in the United States at the highest judicial level?", correct_answer: "The Supreme Court typically interprets the Constitution at the highest judicial level in the United States.", incorrect_answer: "The Senate typically interprets the Constitution at the highest judicial level in the United States.", snippet_1: "The Supreme Court is the highest court in the US federal judiciary.", snippet_2: "The Senate is a legislative body rather than the highest judicial authority." },
+      { id: "Q23", type: "numeric", question: "A cartography question asks: Approximately how many continents are commonly recognized in the standard school model?", correct_answer: "The standard school model commonly recognizes 7 continents.", incorrect_answer: "The standard school model commonly recognizes 5 continents.", snippet_1: "Many educational references use a seven continent model.", snippet_2: "Alternative models exist, but the standard English language school model usually counts seven." },
+      { id: "Q24", type: "categorical", question: "A music history question asks: Which composer is most closely associated with the Ninth Symphony that includes the 'Ode to Joy'?", correct_answer: "Ludwig van Beethoven is most closely associated with the Ninth Symphony containing the 'Ode to Joy'.", incorrect_answer: "Wolfgang Amadeus Mozart is most closely associated with the Ninth Symphony containing the 'Ode to Joy'.", snippet_1: "Beethoven's Ninth Symphony famously includes the choral 'Ode to Joy' finale.", snippet_2: "Mozart composed many major works, but not Beethoven's Ninth Symphony." },
+      { id: "Q25", type: "categorical", question: "An environmental science question asks: Which gas do plants absorb from the atmosphere for photosynthesis?", correct_answer: "Plants absorb carbon dioxide from the atmosphere for photosynthesis.", incorrect_answer: "Plants absorb helium from the atmosphere for photosynthesis.", snippet_1: "Photosynthesis uses carbon dioxide and water to produce glucose.", snippet_2: "Helium is an inert noble gas and is not used in photosynthesis." },
+      { id: "Q26", type: "numeric", question: "A statistics question asks: What value is typically used to represent the probability of an impossible event?", correct_answer: "An impossible event is represented by a probability of 0.", incorrect_answer: "An impossible event is represented by a probability of 1.", snippet_1: "Probability theory assigns 0 to impossible events and 1 to certain events.", snippet_2: "A probability of 1 indicates certainty rather than impossibility." },
+      { id: "Q27", type: "categorical", question: "A world history question asks: Which empire is most strongly associated with the city of Rome as its political center in antiquity?", correct_answer: "The Roman Empire is most strongly associated with Rome as its political center in antiquity.", incorrect_answer: "The Ottoman Empire is most strongly associated with Rome as its political center in antiquity.", snippet_1: "Rome served as the central city of Roman political power in antiquity.", snippet_2: "The Ottoman Empire was centered later around Constantinople, not ancient Rome." },
+      { id: "Q28", type: "categorical", question: "A meteorology question asks: What instrument is commonly used to measure atmospheric pressure?", correct_answer: "A barometer is commonly used to measure atmospheric pressure.", incorrect_answer: "A thermometer is commonly used to measure atmospheric pressure.", snippet_1: "Meteorology uses barometers to measure changes in atmospheric pressure.", snippet_2: "Thermometers measure temperature rather than pressure." },
+      { id: "Q29", type: "numeric", question: "A transport question asks: How many wheels does a standard bicycle have?", correct_answer: "A standard bicycle has 2 wheels.", incorrect_answer: "A standard bicycle has 3 wheels.", snippet_1: "By definition, a conventional bicycle is a two wheeled vehicle.", snippet_2: "Three wheeled variants exist, but they are generally classified separately as tricycles." },
+      { id: "Q30", type: "categorical", question: "A philosophy question asks: Which ancient philosopher is most strongly associated with the method of questioning known as the Socratic method?", correct_answer: "Socrates is most strongly associated with the method of questioning known as the Socratic method.", incorrect_answer: "Aristotle is most strongly associated with the method of questioning known as the Socratic method.", snippet_1: "The Socratic method is named after Socrates and is associated with disciplined questioning.", snippet_2: "Aristotle made major contributions to philosophy, but the method is not named after him." },
+    ];
+
+    const PRACTICE_ITEMS = [
+      { id: "P01", type: "categorical", question: "A user asks: Which city is the capital of Italy?", correct_answer: "Rome is the capital of Italy.", incorrect_answer: "Milan is the capital of Italy.", snippet_1: "Standard geographical references identify Rome as the capital of Italy.", snippet_2: "Milan is a major Italian city but not the capital." },
+      { id: "P02", type: "numeric", question: "A user asks: How many days are there in a standard week?", correct_answer: "A standard week contains 7 days.", incorrect_answer: "A standard week contains 8 days.", snippet_1: "The conventional calendar week is composed of seven days.", snippet_2: "Eight days is not the standard weekly structure in modern calendars." },
+    ];
+
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function applyAnswerStyle(item, correctness, condition, index) {
+      const openers = [
+        "Based on available information,",
+        "From what is generally known,",
+        "According to commonly cited sources,",
+        "In most cases,",
+        "It is generally understood that",
+      ];
+      const stanceHedges = ["I think", "It seems that"];
+      const approximators = ["about", "roughly"];
+      const evidenceOpeners = [
+        "Additional context suggests that",
+        "A concise check indicates that",
+        "Relevant background information shows that",
+      ];
+
+      const baseAnswer = correctness ? item.correct_answer : item.incorrect_answer;
+      const opener = openers[index % openers.length];
+      let displayed_answer = `${opener} ${baseAnswer}`;
+
+      if (condition.hedging) {
+        if (item.type === "numeric") {
+          const approx = approximators[index % approximators.length];
+          displayed_answer = `${opener} ${baseAnswer.replace(/(\d+)/, `${approx} $1`)}`;
+        } else {
+          const hedge = stanceHedges[index % stanceHedges.length];
+          displayed_answer = `${hedge} ${baseAnswer.charAt(0).toLowerCase()}${baseAnswer.slice(1)}`;
+        }
+      }
+
+      const ev1 = evidenceOpeners[index % evidenceOpeners.length];
+      const ev2 = evidenceOpeners[(index + 1) % evidenceOpeners.length];
+
+      return {
+        ...item,
+        correctness,
+        displayed_answer,
+        snippet_1: `${ev1} ${item.snippet_1.charAt(0).toLowerCase()}${item.snippet_1.slice(1)}`,
+        snippet_2: `${ev2} ${item.snippet_2.charAt(0).toLowerCase()}${item.snippet_2.slice(1)}`,
+      };
+    }
+
+    function buildPracticeTrials(condition) {
+      return PRACTICE_ITEMS.map((item, index) => ({
+        ...applyAnswerStyle(item, index === 0 ? 1 : 0, condition, index),
+        block: 0,
+        trial_index: index + 1,
+        practice: true,
+        condition: condition.id,
+        condition_label: condition.label,
+        hedging: condition.hedging,
+        modality: condition.modality,
+      }));
+    }
+
+    function buildMainTrials(condition) {
+      const pool = shuffle(ITEM_BANK);
+      const blocks = [];
+      for (let block = 1; block <= 3; block += 1) {
+        const start = (block - 1) * 10;
+        const blockItems = pool.slice(start, start + 10);
+        const incorrectPositions = new Set(shuffle([0,1,2,3,4,5,6,7,8,9]).slice(0,3));
+        const styled = blockItems.map((item, idx) => ({
+          ...applyAnswerStyle(item, incorrectPositions.has(idx) ? 0 : 1, condition, start + idx),
+          block,
+          trial_index: start + idx + 1,
+          practice: false,
+          condition: condition.id,
+          condition_label: condition.label,
+          hedging: condition.hedging,
+          modality: condition.modality,
+        }));
+        blocks.push(...shuffle(styled));
+      }
+      return blocks;
+    }
+
+    function speakText(text, enabled) {
+      if (!enabled || !("speechSynthesis" in window)) return;
+
+      const synth = window.speechSynthesis;
+
+      const doSpeak = () => {
+        synth.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = synth.getVoices();
+
+        const preferredVoice =
+          voices.find(v => /Google UK English Female/i.test(v.name)) ||
+          voices.find(v => /Google US English/i.test(v.name)) ||
+          voices.find(v => /Samantha/i.test(v.name)) ||
+          voices.find(v => /Ava/i.test(v.name)) ||
+          voices.find(v => /Allison/i.test(v.name)) ||
+          voices.find(v => /Jenny/i.test(v.name)) ||
+          voices.find(v => /Aria/i.test(v.name)) ||
+          voices.find(v => /^en-GB$/i.test(v.lang)) ||
+          voices.find(v => /^en-US$/i.test(v.lang)) ||
+          voices.find(v => /^en/i.test(v.lang));
+
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+          utterance.lang = preferredVoice.lang || "en-GB";
+        } else {
+          utterance.lang = "en-GB";
+        }
+
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1;
+
+        synth.speak(utterance);
+      };
+
+      const voices = synth.getVoices();
+
+      if (voices.length > 0) {
+        doSpeak();
+      } else {
+        const handleVoices = () => {
+          doSpeak();
+          synth.removeEventListener("voiceschanged", handleVoices);
+        };
+
+        synth.addEventListener("voiceschanged", handleVoices);
+
+        setTimeout(() => {
+          try {
+            synth.removeEventListener("voiceschanged", handleVoices);
+          } catch (e) {}
+          if (!synth.speaking) doSpeak();
+        }, 500);
+      }
+    }
+
+    function loadLocalSessions() {
+      const sessions = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(STORAGE_PREFIX)) continue;
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key));
+          if (parsed && parsed.meta && Array.isArray(parsed.logs)) {
+            sessions.push({ ...parsed, _source: key });
+          }
+        } catch (error) {}
+      }
+      return sessions;
+    }
+
+    function mean(values) {
+      if (!values.length) return 0;
+      return values.reduce((a, b) => a + b, 0) / values.length;
+    }
+
+    function median(values) {
+      if (!values.length) return 0;
+      const sorted = [...values].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function percent(part, whole) {
+      if (!whole) return 0;
+      return Math.round((part / whole) * 100);
+    }
+
+    function groupBy(rows, keyFn) {
+      const map = {};
+      rows.forEach((row) => {
+        const key = keyFn(row);
+        if (!map[key]) map[key] = [];
+        map[key].push(row);
+      });
+      return map;
+    }
+
+    function summarizeRows(rows) {
+      const total = rows.length;
+      const accepted = rows.filter((r) => r.final_decision === 1).length;
+      const rejected = rows.filter((r) => r.final_decision === 0).length;
+      const verified = rows.filter((r) => r.verify_clicked === 1).length;
+      const accuracy = total ? Math.round((rows.reduce((a, r) => a + (r.final_accuracy || 0), 0) / total) * 100) : 0;
+      const meanDecision = Math.round(mean(rows.map((r) => r.decision_time_ms || 0)));
+      const medianDecision = Math.round(median(rows.map((r) => r.decision_time_ms || 0)));
+      return { total, accepted, rejected, verified, accuracy, meanDecision, medianDecision };
+    }
+
+    function emptyLikertSet(items) {
+      return Object.fromEntries(items.map((item, index) => [item.id || `item_${index + 1}`, ""]));
+    }
+
+    function allLikertAnswered(obj) {
+      return Object.values(obj).every(Boolean);
+    }
+
+    function reverse7(value) {
+      return 8 - Number(value);
+    }
+
+    function scoreTrust(responses) {
+      const scored = TRUST_ITEMS.map((item) => {
+        const raw = responses[item.id];
+        if (!raw) return null;
+        return item.reverse ? reverse7(raw) : Number(raw);
+      }).filter((v) => v != null);
+      return scored.length ? mean(scored) : 0;
+    }
+
+    function scoreRawNasaTlx(responses) {
+      const scored = NASA_TLX_ITEMS.map((item) => {
+        const raw = responses[item.id];
+        if (!raw) return null;
+        const value = Number(raw);
+        return item.id === "N4" ? reverse7(value) : value;
+      }).filter((v) => v != null);
+      return scored.length ? mean(scored) : 0;
+    }
+
+    function ueqItemToScaleValue(item, raw) {
+      const centered = Number(raw) - 4;
+      return item.positiveRight ? centered : -centered;
+    }
+
+    function scoreUeq(responses) {
+      const grouped = {};
+      UEQ_ITEMS.forEach((item) => {
+        const raw = responses[item.id];
+        if (!raw) return;
+        if (!grouped[item.scale]) grouped[item.scale] = [];
+        grouped[item.scale].push(ueqItemToScaleValue(item, raw));
+      });
+      const result = {};
+      Object.keys(grouped).forEach((scale) => {
+        result[scale] = mean(grouped[scale]);
+      });
+      return result;
+    }
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function asCsv(rows) {
+      if (!rows.length) return "";
+      const headers = Object.keys(rows[0]);
+      const escapeCell = (value) => {
+        const stringValue = value == null ? "" : String(value);
+        if (/[",\n]/.test(stringValue)) return `"${stringValue.replace(/"/g, '""')}"`;
+        return stringValue;
+      };
+      return [headers.join(","), ...rows.map((row) => headers.map((h) => escapeCell(row[h])).join(","))].join("\n");
+    }
+
+    function downloadCsv(filename, rows) {
+      const blob = new Blob([asCsv(rows)], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function saveTextFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function MetricCard({ label, value, subvalue }) {
+      return (
+        <div className="rounded-3xl border border-white/10 bg-white/95 p-5 shadow-xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</div>
+          <div className="mt-2 text-3xl font-semibold text-slate-900">{value}</div>
+          {subvalue ? <div className="mt-1 text-sm text-slate-600">{subvalue}</div> : null}
+        </div>
+      );
+    }
+
+    function Panel({ title, subtitle, children, actions }) {
+      return (
+        <div className="rounded-[2rem] border border-white/10 bg-white/95 p-6 shadow-2xl shadow-slate-950/20 backdrop-blur">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+            {subtitle ? <p className="mt-1 text-sm text-slate-600">{subtitle}</p> : null}
+          </div>
+          <div>{children}</div>
+          {actions ? <div className="mt-8 flex flex-wrap gap-3">{actions}</div> : null}
+        </div>
+      );
+    }
+
+    function BarChart({ title, labels, data, suffix = "", color = "bg-blue-500" }) {
+      const max = Math.max(...data, 1);
+      return (
+        <Panel title={title}>
+          <div className="space-y-3">
+            {data.map((value, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-28 shrink-0 text-xs text-slate-600">{labels[i]}</div>
+                <div className="h-4 flex-1 overflow-hidden rounded-full bg-slate-200">
+                  <div className={`${color} h-full rounded-full`} style={{ width: `${(value / max) * 100}%` }} />
+                </div>
+                <div className="w-16 shrink-0 text-right text-xs font-medium text-slate-700">{value}{suffix}</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      );
+    }
+
+    function Table({ title, rows, columns, maxHeight = "max-h-[420px]" }) {
+      return (
+        <Panel title={title}>
+          <div className={`overflow-auto rounded-3xl border border-slate-200 ${maxHeight}`}>
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 bg-slate-100 text-left text-slate-600">
+                <tr>
+                  {columns.map((col) => <th key={col.key} className="px-4 py-3 font-medium">{col.label}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr key={i} className="border-t border-slate-100 bg-white">
+                    {columns.map((col) => <td key={col.key} className="px-4 py-3 align-top">{col.render ? col.render(row) : row[col.key]}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      );
+    }
+
+    function Likert({ label, value, onChange, leftLabel, rightLabel }) {
+      return (
+        <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+          <div className="mb-3 text-sm font-medium text-slate-800">{label}</div>
+          {(leftLabel || rightLabel) && (
+            <div className="mb-2 flex justify-between text-xs text-slate-500">
+              <span>{leftLabel || ""}</span>
+              <span>{rightLabel || ""}</span>
+            </div>
+          )}
+          <div className="grid grid-cols-7 gap-2">
+            {LIKERT_OPTIONS.map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => onChange(String(num))}
+                className={`rounded-2xl px-3 py-3 text-sm font-medium transition ${value === String(num) ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"}`}
+              >
+                {num}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-slate-500">{LIKERT_LABELS[Number(value)] || ""}</div>
+        </label>
+      );
+    }
+
+    function LikertBlock({ title, items, values, onChange, type = "standard" }) {
+      return (
+        <Panel title={title}>
+          <div className="grid gap-4">
+            {items.map((item, index) => {
+              const key = item.id || `item_${index + 1}`;
+              if (type === "ueq") {
+                return (
+                  <Likert
+                    key={key}
+                    label={`${item.left} — ${item.right}`}
+                    value={values[key]}
+                    onChange={(value) => onChange(key, value)}
+                    leftLabel={item.left}
+                    rightLabel={item.right}
+                  />
+                );
+              }
+              if (type === "nasa") {
+                return (
+                  <Likert
+                    key={key}
+                    label={item.text}
+                    value={values[key]}
+                    onChange={(value) => onChange(key, value)}
+                    leftLabel={item.left}
+                    rightLabel={item.right}
+                  />
+                );
+              }
+              return (
+                <Likert
+                  key={key}
+                  label={item.text}
+                  value={values[key]}
+                  onChange={(value) => onChange(key, value)}
+                />
+              );
+            })}
+          </div>
+        </Panel>
+      );
+    }
+
+    function App() {
+      const [mode, setMode] = useState("admin");
+      const [sessions, setSessions] = useState([]);
+      const [message, setMessage] = useState("");
+      const [participantId, setParticipantId] = useState("");
+      const [assignmentMode, setAssignmentMode] = useState("manual");
+      const [conditionId, setConditionId] = useState("C1");
+      const [offerInterview, setOfferInterview] = useState(true);
+
+      const [screen, setScreen] = useState("setup");
+      const [assignedConditionId, setAssignedConditionId] = useState("C1");
+      const [practiceTrials, setPracticeTrials] = useState([]);
+      const [mainTrials, setMainTrials] = useState([]);
+      const [isPractice, setIsPractice] = useState(true);
+      const [trialPointer, setTrialPointer] = useState(0);
+      const [logs, setLogs] = useState([]);
+      const [verifyCount, setVerifyCount] = useState(0);
+      const [decisionStart, setDecisionStart] = useState(null);
+      const [sessionStart, setSessionStart] = useState(null);
+      const [sessionStatus, setSessionStatus] = useState("completed");
+      const [notes, setNotes] = useState("");
+      const [manipulationUncertainty, setManipulationUncertainty] = useState("");
+      const [manipulationCertainty, setManipulationCertainty] = useState("");
+      const [trustResponses, setTrustResponses] = useState(emptyLikertSet(TRUST_ITEMS));
+      const [workloadResponses, setWorkloadResponses] = useState(emptyLikertSet(NASA_TLX_ITEMS));
+      const [ueqResponses, setUeqResponses] = useState(emptyLikertSet(UEQ_ITEMS));
+      const [interviewConsent, setInterviewConsent] = useState("declined");
+      const [interview, setInterview] = useState({
+        strategy: "",
+        hedges: "",
+        modality: "",
+        block_changes: "",
+      });
+      const [saveStatus, setSaveStatus] = useState("");
+
+      const selectedCondition = useMemo(
+        () => CONDITIONS.find((c) => c.id === conditionId) ?? CONDITIONS[0],
+        [conditionId]
+      );
+
+      const assignedCondition = useMemo(
+        () => CONDITIONS.find((c) => c.id === assignedConditionId) ?? CONDITIONS[0],
+        [assignedConditionId]
+      );
+
+      const activeTrials = isPractice ? practiceTrials : mainTrials;
+      const currentTrial = activeTrials[trialPointer];
+      const currentMainTrialNumber = isPractice ? 0 : trialPointer + 1;
+      const currentBlock = currentTrial?.block ?? 0;
+      const progress = isPractice
+        ? Math.round((trialPointer / Math.max(practiceTrials.length, 1)) * 100)
+        : Math.round((trialPointer / Math.max(mainTrials.length, 1)) * 100);
+
+      useEffect(() => {
+        if (!("speechSynthesis" in window)) return;
+        const synth = window.speechSynthesis;
+        synth.getVoices();
+        const handleVoicesChanged = () => synth.getVoices();
+        synth.addEventListener("voiceschanged", handleVoicesChanged);
+        return () => synth.removeEventListener("voiceschanged", handleVoicesChanged);
+      }, []);
+
+      useEffect(() => {
+        if (screen === "answer" && currentTrial) {
+          const now = Date.now();
+          setDecisionStart(now);
+          setTimeout(() => {
+            speakText(currentTrial.displayed_answer, currentTrial.modality === 1);
+          }, 120);
+        }
+      }, [screen, currentTrial]);
+
+      const allLogs = useMemo(
+        () => sessions.flatMap((s) => Array.isArray(s.logs) ? s.logs : []),
+        [sessions]
+      );
+
+      const summary = useMemo(() => summarizeRows(allLogs), [allLogs]);
+      const byCondition = useMemo(() => groupBy(allLogs, (r) => r.condition || "Unknown"), [allLogs]);
+      const conditionLabels = Object.keys(byCondition).sort();
+      const conditionAccuracy = conditionLabels.map((key) => summarizeRows(byCondition[key]).accuracy);
+      const conditionVerifyRate = conditionLabels.map((key) => percent(byCondition[key].filter((r) => r.verify_clicked === 1).length, byCondition[key].length));
+      const conditionMeanTime = conditionLabels.map((key) => summarizeRows(byCondition[key]).meanDecision);
+      const blockLabels = ["Block 1", "Block 2", "Block 3"];
+      const blockAccuracy = [1,2,3].map((b) => summarizeRows(allLogs.filter((r) => r.block === b)).accuracy);
+      const blockVerifyRate = [1,2,3].map((b) => percent(allLogs.filter((r) => r.block === b && r.verify_clicked === 1).length, allLogs.filter((r) => r.block === b).length));
+      const decisionLabels = ["Accept", "Reject"];
+      const decisionData = [summary.accepted, summary.rejected];
+
+      const conditionRows = useMemo(() => {
+        return conditionLabels.map((cond) => {
+          const rows = byCondition[cond] || [];
+          const stats = summarizeRows(rows);
+          return {
+            condition: cond,
+            n: rows.length,
+            accuracy: `${stats.accuracy}%`,
+            accepted: stats.accepted,
+            rejected: stats.rejected,
+            verified: stats.verified,
+            verify_rate: `${percent(stats.verified, rows.length)}%`,
+            mean_time_ms: stats.meanDecision,
+            median_time_ms: stats.medianDecision,
+          };
+        });
+      }, [conditionLabels, byCondition]);
+
+      const sessionRows = useMemo(() => sessions.map((s) => ({
+        source: s._source || "current_browser",
+        participant: s.meta?.participant_id || "—",
+        condition: s.meta?.condition || "—",
+        status: s.meta?.session_status || "completed",
+        trials: Array.isArray(s.logs) ? s.logs.length : 0,
+        uncertainty: s.meta?.manipulation_uncertainty || "—",
+        certainty: s.meta?.manipulation_certainty || "—",
+      })), [sessions]);
+
+      const itemRows = useMemo(() => {
+        const grouped = groupBy(allLogs, (r) => r.item_id || "Unknown");
+        return Object.keys(grouped).sort().map((itemId) => {
+          const rows = grouped[itemId];
+          const stats = summarizeRows(rows);
+          return {
+            item_id: itemId,
+            n: rows.length,
+            accuracy: `${stats.accuracy}%`,
+            verify_rate: `${percent(stats.verified, rows.length)}%`,
+            accepted: stats.accepted,
+            rejected: stats.rejected,
+            mean_time_ms: stats.meanDecision,
+            prompt: rows[0]?.question || "",
+          };
+        });
+      }, [allLogs]);
+
+      function updateLikertSet(setter, key, value) {
+        setter((prev) => ({ ...prev, [key]: value }));
+      }
+
+      function loadSavedSessions() {
+        const loaded = loadLocalSessions();
+        setSessions(loaded);
+        setMessage(
+          loaded.length
+            ? `${loaded.length} saved session(s) loaded from this browser.`
+            : "No saved participant sessions found in this browser."
+        );
+      }
+
+      async function importJsonFiles(event) {
+        const files = Array.from(event.target.files || []);
+        if (!files.length) return;
+        const parsed = [];
+        let failed = 0;
+        for (const file of files) {
+          try {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            if (json && json.meta && Array.isArray(json.logs)) parsed.push({ ...json, _source: file.name });
+            else failed += 1;
+          } catch {
+            failed += 1;
+          }
+        }
+        setSessions((prev) => [...prev, ...parsed]);
+        setMessage(
+          parsed.length
+            ? `${parsed.length} session file(s) imported${failed ? `, ${failed} skipped` : ""}.`
+            : "No valid session JSON files were imported."
+        );
+        event.target.value = "";
+      }
+
+      function clearSessions() {
+        setSessions([]);
+        setMessage("Loaded sessions cleared from the dashboard.");
+      }
+
+      function assignCondition() {
+        if (assignmentMode === "random") {
+          return CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)].id;
+        }
+        return conditionId;
+      }
+
+      function startIntegratedRun() {
+        const cleanId = participantId.trim() || `P${Math.floor(Math.random() * 100000)}`;
+        const chosenConditionId = assignCondition();
+        const chosenCondition = CONDITIONS.find((c) => c.id === chosenConditionId) ?? CONDITIONS[0];
+
+        setParticipantId(cleanId);
+        setAssignedConditionId(chosenConditionId);
+        setPracticeTrials(buildPracticeTrials(chosenCondition));
+        setMainTrials(buildMainTrials(chosenCondition));
+        setIsPractice(true);
+        setTrialPointer(0);
+        setLogs([]);
+        setVerifyCount(0);
+        setSessionStatus("completed");
+        setNotes("");
+        setManipulationUncertainty("");
+        setManipulationCertainty("");
+        setTrustResponses(emptyLikertSet(TRUST_ITEMS));
+        setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
+        setUeqResponses(emptyLikertSet(UEQ_ITEMS));
+        setInterviewConsent(offerInterview ? "pending" : "declined");
+        setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
+        setSaveStatus("");
+        setSessionStart(Date.now());
+        setMode("participant");
+        setScreen("instructions");
+      }
+
+      function finishTrial(finalDecision) {
+        if (!currentTrial || decisionStart == null) return;
+        const decisionTime = Date.now() - decisionStart;
+        const finalAccuracy =
+          ((currentTrial.correctness === 1 && finalDecision === 1) ||
+           (currentTrial.correctness === 0 && finalDecision === 0))
+            ? 1
+            : 0;
+
+        if (!currentTrial.practice) {
+          const row = {
+            participant_id: participantId,
+            condition: currentTrial.condition,
+            condition_label: currentTrial.condition_label,
+            hedging: currentTrial.hedging,
+            modality: currentTrial.modality,
+            item_id: currentTrial.id,
+            block: currentTrial.block,
+            trial_index: currentTrial.trial_index,
+            correctness: currentTrial.correctness,
+            displayed_answer: currentTrial.displayed_answer,
+            verify_clicked: verifyCount > 0 ? 1 : 0,
+            verify_count: verifyCount,
+            final_decision: finalDecision,
+            decision_time_ms: decisionTime,
+            final_accuracy: finalAccuracy,
+            question: currentTrial.question,
+          };
+          setLogs((prev) => [...prev, row]);
+        }
+
+        if (isPractice) {
+          if (trialPointer === practiceTrials.length - 1) {
+            setIsPractice(false);
+            setTrialPointer(0);
+            setVerifyCount(0);
+            setScreen("practice_complete");
+          } else {
+            setTrialPointer((p) => p + 1);
+            setVerifyCount(0);
+            setScreen("question");
+          }
+          return;
+        }
+
+        if (trialPointer === mainTrials.length - 1) {
+          setScreen("manipulation_checks");
+        } else {
+          const nextIndex = trialPointer + 1;
+          const nextBlock = mainTrials[nextIndex]?.block;
+          const currentBlockNow = mainTrials[trialPointer]?.block;
+          setTrialPointer(nextIndex);
+          setVerifyCount(0);
+          if (nextBlock && currentBlockNow && nextBlock !== currentBlockNow) {
+            setScreen("break");
+          } else {
+            setScreen("question");
+          }
+        }
+      }
+
+      function buildPayload(reason = sessionStatus) {
+        return {
+          meta: {
+            participant_id: participantId,
+            condition: assignedCondition.id,
+            condition_label: assignedCondition.label,
+            hedging: assignedCondition.hedging,
+            modality: assignedCondition.modality,
+            session_start: sessionStart,
+            session_end: Date.now(),
+            manipulation_uncertainty: manipulationUncertainty,
+            manipulation_certainty: manipulationCertainty,
+            trust_responses: trustResponses,
+            trust_score_mean: scoreTrust(trustResponses),
+            workload_responses: workloadResponses,
+            nasa_tlx_raw_mean: scoreRawNasaTlx(workloadResponses),
+            ueq_responses: ueqResponses,
+            ueq_scale_scores: scoreUeq(ueqResponses),
+            interview_consent: interviewConsent,
+            researcher_notes: notes,
+            n_trials_completed: logs.length,
+            session_status: reason,
+            practice_trials_completed: practiceTrials.length,
+            main_trials_planned: mainTrials.length,
+            interview_strategy: interview.strategy,
+            interview_hedges: interview.hedges,
+            interview_modality: interview.modality,
+            interview_block_changes: interview.block_changes,
+            assignment_mode: assignmentMode,
+          },
+          logs,
+        };
+      }
+
+      async function persistIntegratedResults(reason = sessionStatus) {
+        const payload = buildPayload(reason);
+        const safeId = participantId || "participant";
+        localStorage.setItem(`${STORAGE_PREFIX}${safeId}_${Date.now()}`, JSON.stringify(payload));
+        saveTextFile(`${safeId}_session.json`, JSON.stringify(payload, null, 2), "application/json");
+        saveTextFile(`${safeId}_trials.csv`, asCsv(payload.logs), "text/csv;charset=utf-8;");
+
+        if (WEBHOOK_URL) {
+          try {
+            const response = await fetch(WEBHOOK_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            setSaveStatus("Results were saved locally and sent successfully.");
+          } catch {
+            setSaveStatus("Results were saved locally, but automatic sending failed.");
+          }
+        } else {
+          setSaveStatus("Results were saved locally and can be loaded again on the admin start page.");
+        }
+      }
+
+      function endSessionEarly() {
+        setSessionStatus("ended_early");
+        setScreen("manipulation_checks");
+      }
+
+      function resetToAdminHome() {
+        setMode("admin");
+        setScreen("setup");
+      }
+
+      if (mode === "admin") {
+        return (
+          <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-10">
+            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 shadow-2xl shadow-blue-950/30">
+              <div className="grid gap-8 p-8 md:grid-cols-[1.35fr_0.85fr] md:p-10">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-blue-100">
+                    Researcher admin interface
+                  </div>
+                  <h1 className="mt-5 text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                    AI Hedging Experiment
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-100/85 md:text-base">
+                    This start page supports your methodology: one condition per participant, two practice trials, thirty main trials in three blocks, post-task manipulation checks, trust/workload/user-experience scales, and an optional reflective interview section.
+                  </p>
+                  <div className="mt-8 flex flex-wrap gap-3 text-sm text-blue-50">
+                    <button onClick={loadSavedSessions} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 transition hover:bg-white/20">Load saved sessions</button>
+                    <label className="cursor-pointer rounded-2xl border border-white/10 bg-white/10 px-4 py-3 transition hover:bg-white/20">
+                      Import participant JSON
+                      <input type="file" accept="application/json,.json" multiple className="hidden" onChange={importJsonFiles} />
+                    </label>
+                    <button onClick={clearSessions} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 transition hover:bg-white/20">Clear loaded sessions</button>
+                  </div>
+                  {message ? <div className="mt-4 text-sm text-blue-100/90">{message}</div> : null}
+                </div>
+                <div className="grid gap-4 self-end md:grid-cols-2">
+                  <MetricCard label="Sessions" value={sessions.length} subvalue="loaded in dashboard" />
+                  <MetricCard label="Trials" value={summary.total} subvalue="across all loaded sessions" />
+                  <MetricCard label="Accuracy" value={`${summary.accuracy}%`} subvalue="overall final accuracy" />
+                  <MetricCard label="Median time" value={`${summary.medianDecision} ms`} subvalue="overall decision time" />
+                </div>
+              </div>
+            </div>
+
+            <Panel title="Start participant run" subtitle="Choose manual or random condition assignment. The participant receives one condition for the full session.">
+              <div className="grid gap-4 md:grid-cols-5">
+                <label className="block md:col-span-1">
+                  <div className="mb-2 text-sm font-medium text-slate-700">Participant ID</div>
+                  <input className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={participantId} onChange={(e) => setParticipantId(e.target.value)} placeholder="P001" />
+                </label>
+                <label className="block md:col-span-1">
+                  <div className="mb-2 text-sm font-medium text-slate-700">Assignment mode</div>
+                  <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={assignmentMode} onChange={(e) => setAssignmentMode(e.target.value)}>
+                    <option value="manual">Manual condition</option>
+                    <option value="random">Random condition</option>
+                  </select>
+                </label>
+                <label className="block md:col-span-1">
+                  <div className="mb-2 text-sm font-medium text-slate-700">Condition</div>
+                  <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 disabled:opacity-50" value={conditionId} onChange={(e) => setConditionId(e.target.value)} disabled={assignmentMode === "random"}>
+                    {CONDITIONS.map((c) => (
+                      <option key={c.id} value={c.id}>{c.id} — {c.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block md:col-span-1">
+                  <div className="mb-2 text-sm font-medium text-slate-700">Optional interview</div>
+                  <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={offerInterview ? "yes" : "no"} onChange={(e) => setOfferInterview(e.target.value === "yes")}>
+                    <option value="yes">Offer interview section</option>
+                    <option value="no">Skip interview section</option>
+                  </select>
+                </label>
+                <div className="flex items-end">
+                  <button onClick={startIntegratedRun} className="w-full rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800">Start experiment</button>
+                </div>
+              </div>
+            </Panel>
+
+            {sessions.length > 0 && (
+              <>
+                <div className="grid gap-4 md:grid-cols-4">
+                  <MetricCard label="Accepted" value={summary.accepted} subvalue={`${percent(summary.accepted, summary.total)}% of all decisions`} />
+                  <MetricCard label="Rejected" value={summary.rejected} subvalue={`${percent(summary.rejected, summary.total)}% of all decisions`} />
+                  <MetricCard label="Verified" value={summary.verified} subvalue={`${percent(summary.verified, summary.total)}% opened evidence`} />
+                  <MetricCard label="Mean time" value={`${summary.meanDecision} ms`} subvalue="average decision time" />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <BarChart title="Accuracy per condition" labels={conditionLabels} data={conditionAccuracy} suffix="%" color="bg-blue-500" />
+                  <BarChart title="Verify rate per condition" labels={conditionLabels} data={conditionVerifyRate} suffix="%" color="bg-emerald-500" />
+                  <BarChart title="Mean decision time per condition" labels={conditionLabels} data={conditionMeanTime} suffix=" ms" color="bg-violet-500" />
+                  <BarChart title="Accuracy per block" labels={blockLabels} data={blockAccuracy} suffix="%" color="bg-amber-500" />
+                  <BarChart title="Verify rate per block" labels={blockLabels} data={blockVerifyRate} suffix="%" color="bg-rose-500" />
+                  <BarChart title="Accept vs reject" labels={decisionLabels} data={decisionData} color="bg-cyan-500" />
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button onClick={() => downloadJson("admin_aggregated_results.json", { sessions, summary, conditionRows, itemRows })} className="rounded-2xl bg-white px-5 py-3 text-sm font-medium text-slate-900 shadow-lg transition hover:-translate-y-0.5">Export aggregated JSON</button>
+                  <button onClick={() => downloadCsv("admin_all_logs.csv", allLogs)} className="rounded-2xl bg-white px-5 py-3 text-sm font-medium text-slate-900 shadow-lg transition hover:-translate-y-0.5">Export all logs CSV</button>
+                </div>
+
+                <Table title="Condition summary" rows={conditionRows} columns={[
+                  { key: "condition", label: "Condition" },
+                  { key: "n", label: "Trials" },
+                  { key: "accuracy", label: "Accuracy" },
+                  { key: "accepted", label: "Accepted" },
+                  { key: "rejected", label: "Rejected" },
+                  { key: "verified", label: "Verified" },
+                  { key: "verify_rate", label: "Verify rate" },
+                  { key: "mean_time_ms", label: "Mean ms" },
+                  { key: "median_time_ms", label: "Median ms" },
+                ]} />
+
+                <Table title="Loaded participant sessions" rows={sessionRows} columns={[
+                  { key: "source", label: "Source" },
+                  { key: "participant", label: "Participant" },
+                  { key: "condition", label: "Condition" },
+                  { key: "status", label: "Status" },
+                  { key: "trials", label: "Trials" },
+                  { key: "uncertainty", label: "Uncertainty check" },
+                  { key: "certainty", label: "Certainty check" },
+                ]} maxHeight="max-h-[320px]" />
+
+                <Table title="Item-level performance" rows={itemRows} columns={[
+                  { key: "item_id", label: "Item" },
+                  { key: "n", label: "N" },
+                  { key: "accuracy", label: "Accuracy" },
+                  { key: "verify_rate", label: "Verify rate" },
+                  { key: "accepted", label: "Accepted" },
+                  { key: "rejected", label: "Rejected" },
+                  { key: "mean_time_ms", label: "Mean ms" },
+                  { key: "prompt", label: "Prompt" },
+                ]} maxHeight="max-h-[520px]" />
+              </>
+            )}
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.22),_transparent_32%),linear-gradient(180deg,#020617_0%,#0f172a_50%,#111827_100%)] px-4 py-6 md:px-8 md:py-10 text-slate-900">
+          <div className="mx-auto max-w-4xl space-y-6">
+            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 shadow-2xl shadow-blue-950/30">
+              <div className="p-8 md:p-10">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-blue-100">Participant session</div>
+                <h1 className="mt-5 text-4xl font-semibold tracking-tight text-white md:text-5xl">Answer Evaluation Task</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-blue-100/85 md:text-base">
+                  You will read a series of questions and answers. The assistant can be wrong. You may check additional information before deciding whether to accept or reject an answer.
+                </p>
+              </div>
+            </div>
+
+            {!["setup", "instructions", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "complete"].includes(screen) && currentTrial && (
+              <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
+                  <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
+                  <div><span className="font-semibold text-white">Study variant:</span> Hidden from participant</div>
+                  <div><span className="font-semibold text-white">Phase:</span> {isPractice ? `Practice ${trialPointer + 1}/${practiceTrials.length}` : `Block ${currentBlock} · Trial ${currentMainTrialNumber}/30`}</div>
+                  <button className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20" onClick={endSessionEarly} type="button">End session</button>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-500" style={{ width: `${Math.max(progress, 8)}%` }} />
+                </div>
+              </div>
+            )}
+
+            {screen === "instructions" && (
+              <Panel title="Instructions" subtitle="Please read the following carefully before starting the task." actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("question")}>Start practice</button>}>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5"><div className="text-sm font-semibold text-blue-950">1. Read the question</div><p className="mt-2 text-sm text-blue-900/80">A question is shown first.</p></div>
+                  <div className="rounded-3xl border border-violet-100 bg-violet-50 p-5"><div className="text-sm font-semibold text-violet-950">2. Review the answer</div><p className="mt-2 text-sm text-violet-900/80">An answer is then provided. Depending on your session, it may also be spoken aloud.</p></div>
+                  <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-5"><div className="text-sm font-semibold text-emerald-950">3. Decide</div><p className="mt-2 text-sm text-emerald-900/80">Accept, reject, or check additional information before deciding.</p></div>
+                </div>
+              </Panel>
+            )}
+
+            {screen === "question" && currentTrial && (
+              <Panel title={isPractice ? `Practice question ${trialPointer + 1}` : `Question ${currentMainTrialNumber}`} subtitle="Please read the question carefully before moving on." actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("answer")}>Show answer</button>}>
+                <div className="rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 text-2xl font-medium leading-relaxed text-slate-900 shadow-inner">{currentTrial.question}</div>
+              </Panel>
+            )}
+
+            {screen === "answer" && currentTrial && (
+              <Panel title="Answer" subtitle="Please review the answer before making your judgment." actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("decision")}>Continue</button>}>
+                <div className="rounded-[1.75rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-8 text-xl leading-relaxed text-slate-900 shadow-sm">{currentTrial.displayed_answer}</div>
+                {currentTrial?.modality === 1 && <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">Audio playback is active in this session.</div>}
+              </Panel>
+            )}
+
+            {screen === "decision" && currentTrial && (
+              <Panel title="Your judgment" subtitle="What is your decision about this answer?">
+                <div className="rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 text-lg leading-relaxed text-slate-900">{currentTrial.displayed_answer}</div>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white" onClick={() => finishTrial(1)}>Accept</button>
+                  <button className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-medium text-white" onClick={() => finishTrial(0)}>Reject</button>
+                  <button className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-medium text-white" onClick={() => { setVerifyCount((v) => v + 1); setScreen("evidence"); }}>Verify</button>
+                </div>
+              </Panel>
+            )}
+
+            {screen === "evidence" && currentTrial && (
+              <Panel title="Evidence panel" subtitle="You may use the information below to support your judgment." actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("decision")}>Back to decision</button>}>
+                <div className="grid gap-4">
+                  <div className="rounded-[1.5rem] border border-cyan-100 bg-cyan-50 p-5 text-slate-800 shadow-sm">{currentTrial.snippet_1}</div>
+                  <div className="rounded-[1.5rem] border border-indigo-100 bg-indigo-50 p-5 text-slate-800 shadow-sm">{currentTrial.snippet_2}</div>
+                </div>
+              </Panel>
+            )}
+
+            {screen === "practice_complete" && (
+              <Panel title="Practice complete" subtitle="You have finished the practice items." actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("question")}>Start main task</button>}>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">The main task contains 30 items divided into 3 blocks. Short breaks are offered between blocks.</div>
+              </Panel>
+            )}
+
+            {screen === "break" && (
+              <Panel title="Short break" subtitle="You may take a short break before continuing to the next block." actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("question")}>Continue to next block</button>}>
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">When you are ready, continue to the next set of questions.</div>
+              </Panel>
+            )}
+
+            {screen === "manipulation_checks" && (
+              <Panel title="Manipulation checks" subtitle="Please answer the following items about the assistant's wording.">
+                <div className="grid gap-4">
+                  <Likert label="The assistant expressed uncertainty in its wording." value={manipulationUncertainty} onChange={setManipulationUncertainty} />
+                  <Likert label="The assistant sounded certain." value={manipulationCertainty} onChange={setManipulationCertainty} />
+                </div>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("trust_scale")} disabled={!manipulationUncertainty || !manipulationCertainty}>Continue</button>
+                </div>
+              </Panel>
+            )}
+
+            {screen === "trust_scale" && (
+              <div className="space-y-6">
+                <LikertBlock title="Trust and perceived reliability" items={TRUST_ITEMS} values={trustResponses} onChange={(key, value) => updateLikertSet(setTrustResponses, key, value)} />
+                <div className="flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("workload_scale")} disabled={!allLikertAnswered(trustResponses)}>Continue</button>
+                </div>
+              </div>
+            )}
+
+            {screen === "workload_scale" && (
+              <div className="space-y-6">
+                <LikertBlock title="Workload" items={NASA_TLX_ITEMS} values={workloadResponses} onChange={(key, value) => updateLikertSet(setWorkloadResponses, key, value)} type="nasa" />
+                <div className="flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("ueq_scale")} disabled={!allLikertAnswered(workloadResponses)}>Continue</button>
+                </div>
+              </div>
+            )}
+
+            {screen === "ueq_scale" && (
+              <div className="space-y-6">
+                <LikertBlock title="User experience" items={UEQ_ITEMS} values={ueqResponses} onChange={(key, value) => updateLikertSet(setUeqResponses, key, value)} type="ueq" />
+                <div className="flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen(offerInterview ? "interview_invite" : "complete")} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
+                </div>
+              </div>
+            )}
+
+            {screen === "interview_invite" && (
+              <Panel title="Optional interview" subtitle="You may optionally provide some final reflective responses about the task.">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">This section is optional. You may skip it and save your session immediately.</div>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => { setInterviewConsent("accepted"); setScreen("interview_questions"); }}>Answer interview questions</button>
+                  <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => { setInterviewConsent("declined"); setScreen("complete"); }}>Skip interview section</button>
+                </div>
+              </Panel>
+            )}
+
+            {screen === "interview_questions" && (
+              <Panel title="Optional interview questions" subtitle="Please answer the following open-ended questions.">
+                <div className="grid gap-4">
+                  <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-2 text-sm font-medium text-slate-800">What made you decide to verify, accept, or reject answers?</div>
+                    <textarea className="min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={interview.strategy} onChange={(e) => setInterview((p) => ({ ...p, strategy: e.target.value }))} />
+                  </label>
+                  <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-2 text-sm font-medium text-slate-800">How did you interpret phrases like \"I think\" or \"it seems\"?</div>
+                    <textarea className="min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={interview.hedges} onChange={(e) => setInterview((p) => ({ ...p, hedges: e.target.value }))} />
+                  </label>
+                  <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-2 text-sm font-medium text-slate-800">Did the voice or text format influence how confident the assistant felt?</div>
+                    <textarea className="min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={interview.modality} onChange={(e) => setInterview((p) => ({ ...p, modality: e.target.value }))} />
+                  </label>
+                  <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-2 text-sm font-medium text-slate-800">Did your behaviour change across the blocks? If so, why?</div>
+                    <textarea className="min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={interview.block_changes} onChange={(e) => setInterview((p) => ({ ...p, block_changes: e.target.value }))} />
+                  </label>
+                </div>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("complete")}>Continue to save</button>
+                </div>
+              </Panel>
+            )}
+
+            {screen === "complete" && (
+              <Panel title="End of session" subtitle="Press the button below to save all experiment data and session metadata.">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">All collected information will be saved, including trial logs, manipulation checks, full trust, workload, and user-experience responses, computed summary scores, optional interview responses, and session status.</div>
+                {saveStatus && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{saveStatus}</div>}
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => persistIntegratedResults(sessionStatus)}>Save all data</button>
+                  <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={resetToAdminHome}>Back to admin home</button>
+                </div>
+              </Panel>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
