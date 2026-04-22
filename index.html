@@ -17,7 +17,7 @@
 
     const STORAGE_PREFIX = "ai_hedging_participant_session_";
     const ADMIN_CODE = "0000";
-    const WEBHOOK_URL = "";
+    const WEBHOOK_URL = "http://localhost:3000/api/experiment";
 
     const CONDITIONS = [
       { id: "C1", hedging: 0, modality: 0, label: "No hedge + Text" },
@@ -788,7 +788,6 @@
         block: 0,
         trial_index: index + 1,
         practice: true,
-        difficulty: "easy",
         condition: condition.id,
         condition_label: condition.label,
         hedging: condition.hedging,
@@ -810,7 +809,6 @@
           block,
           trial_index: start + idx + 1,
           practice: false,
-          difficulty: idx < 3 ? "easy" : idx < 7 ? "medium" : "hard",
           condition: condition.id,
           condition_label: condition.label,
           hedging: condition.hedging,
@@ -1116,6 +1114,15 @@
     }
 
     function App() {
+      const adminEnabledByQuery = useMemo(() => {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          return params.get("admin") === "1";
+        } catch {
+          return false;
+        }
+      }, []);
+
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -1183,6 +1190,21 @@
         const handleVoicesChanged = () => synth.getVoices();
         synth.addEventListener("voiceschanged", handleVoicesChanged);
         return () => synth.removeEventListener("voiceschanged", handleVoicesChanged);
+      }, []);
+
+      useEffect(() => {
+        const handleKeydown = (e) => {
+          const isMac = navigator.platform.toUpperCase().includes("MAC");
+          const meta = isMac ? e.metaKey : e.ctrlKey;
+          if (meta && e.shiftKey && e.key.toLowerCase() === "a") {
+            e.preventDefault();
+            setShowAdminLogin(true);
+            setAdminCodeInput("");
+            setAdminCodeError("");
+          }
+        };
+        window.addEventListener("keydown", handleKeydown);
+        return () => window.removeEventListener("keydown", handleKeydown);
       }, []);
 
       useEffect(() => {
@@ -1349,7 +1371,6 @@
             item_id: currentTrial.id,
             block: currentTrial.block,
             trial_index: currentTrial.trial_index,
-            difficulty: currentTrial.difficulty,
             correctness: currentTrial.correctness,
             displayed_answer: currentTrial.displayed_answer,
             verification_mode: verificationMode,
@@ -1461,7 +1482,7 @@
             setSaveStatus("Results were saved locally, but automatic sending failed.");
           }
         } else {
-          setSaveStatus("Results were saved locally and can be loaded again through the admin page.");
+          setSaveStatus("Results were saved locally and downloaded on this device.");
         }
       }
 
@@ -1560,15 +1581,17 @@
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.22),_transparent_32%),linear-gradient(180deg,#020617_0%,#0f172a_50%,#111827_100%)] px-4 py-6 md:px-8 md:py-10 text-slate-900">
           <div className="mx-auto max-w-4xl space-y-6">
             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 shadow-2xl shadow-blue-950/30">
-              <div className="absolute right-4 top-4 z-10">
-                <button
-                  type="button"
-                  onClick={openAdminLogin}
-                  className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
-                >
-                  Admin
-                </button>
-              </div>
+              {(adminEnabledByQuery) && (
+                <div className="absolute right-4 top-4 z-10">
+                  <button
+                    type="button"
+                    onClick={openAdminLogin}
+                    className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+                  >
+                    Admin
+                  </button>
+                </div>
+              )}
 
               <div className="p-8 md:p-10">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-blue-100">
@@ -1596,7 +1619,7 @@
                   </button>
                 }
               >
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                   <label className="block">
                     <div className="mb-2 text-sm font-medium text-slate-700">Participant ID</div>
                     <input
@@ -1607,31 +1630,9 @@
                     />
                   </label>
 
-                  <label className="block">
-                    <div className="mb-2 text-sm font-medium text-slate-700">Condition assignment</div>
-                    <select
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                      value={assignmentMode}
-                      onChange={(e) => setAssignmentMode(e.target.value)}
-                    >
-                      <option value="random">Random condition</option>
-                      <option value="manual">Manual condition</option>
-                    </select>
-                  </label>
-
-                  <label className="block">
-                    <div className="mb-2 text-sm font-medium text-slate-700">Condition</div>
-                    <select
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 disabled:opacity-50"
-                      value={conditionId}
-                      onChange={(e) => setConditionId(e.target.value)}
-                      disabled={assignmentMode === "random"}
-                    >
-                      {CONDITIONS.map((c) => (
-                        <option key={c.id} value={c.id}>{c.id}</option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 flex items-center">
+                    Participants are assigned automatically to a study version.
+                  </div>
                 </div>
 
                 <div className="mt-4">
@@ -1652,7 +1653,6 @@
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
-                  <div><span className="font-semibold text-white">Study variant:</span> {assignedCondition.id}</div>
                   <div><span className="font-semibold text-white">Phase:</span> {isPractice ? `Practice ${trialPointer + 1}/${practiceTrials.length}` : `Block ${currentBlock} · Trial ${currentMainTrialNumber}/30`}</div>
                   <button
                     className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
@@ -1956,6 +1956,11 @@
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
                   All collected information will be saved, including trial logs, manipulation checks, trust, workload, user-experience responses, optional interview responses, and session status.
                 </div>
+                {!WEBHOOK_URL && (
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    This build stores data locally and downloads files on this device. For real deployment to many participants, connect a webhook or server endpoint.
+                  </div>
+                )}
                 {saveStatus && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{saveStatus}</div>}
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => persistIntegratedResults(sessionStatus)}>Save all data</button>
