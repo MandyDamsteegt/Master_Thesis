@@ -1114,7 +1114,6 @@
     }
 
     function App() {
-      const [mode, setMode] = useState("participant");
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -1154,11 +1153,6 @@
       const [saveStatus, setSaveStatus] = useState("");
       const [verificationMode, setVerificationMode] = useState("none");
       const [isSearching, setIsSearching] = useState(false);
-
-      const selectedCondition = useMemo(
-        () => CONDITIONS.find((c) => c.id === conditionId) ?? CONDITIONS[0],
-        [conditionId]
-      );
 
       const assignedCondition = useMemo(
         () => CONDITIONS.find((c) => c.id === assignedConditionId) ?? CONDITIONS[0],
@@ -1566,7 +1560,7 @@
                     >
                       {CONDITIONS.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.id} — {c.label}
+                          {c.id}
                         </option>
                       ))}
                     </select>
@@ -1591,7 +1585,7 @@
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
-                  <div><span className="font-semibold text-white">Study variant:</span> Hidden from participant</div>
+                  <div><span className="font-semibold text-white">Study variant:</span> {assignedCondition.id}</div>
                   <div><span className="font-semibold text-white">Phase:</span> {isPractice ? `Practice ${trialPointer + 1}/${practiceTrials.length}` : `Block ${currentBlock} · Trial ${currentMainTrialNumber}/30`}</div>
                   <button
                     className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
@@ -1901,6 +1895,13 @@
                 </div>
               </Panel>
             )}
+
+            <footer className="border-t border-white/10 pt-6 text-center text-xs text-slate-400">
+              <div>AI Hedging Experiment · University Research Prototype</div>
+              <div className="mt-1">
+                All interactions are recorded for research purposes. No personal data is stored beyond session identifiers.
+              </div>
+            </footer>
           </div>
 
           {showAdminLogin && (
@@ -2001,7 +2002,7 @@
                       <div className="mb-2 text-sm font-medium text-slate-700">Condition</div>
                       <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 disabled:opacity-50" value={conditionId} onChange={(e) => setConditionId(e.target.value)} disabled={assignmentMode === "random"}>
                         {CONDITIONS.map((c) => (
-                          <option key={c.id} value={c.id}>{c.id} — {c.label}</option>
+                          <option key={c.id} value={c.id}>{c.id}</option>
                         ))}
                       </select>
                     </label>
