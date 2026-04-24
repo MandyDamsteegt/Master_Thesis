@@ -660,14 +660,9 @@
       },
     ];
 
-    const ASSERTIVE_PREFIXES = [
-      "The answer is:",
-      "The available answer is:",
-    ];
-
     const STANCE_HEDGE_PREFIXES = [
-      "I think the answer is:",
-      "It seems that the answer is:",
+      "I think",
+      "It seems that",
     ];
 
     const NUMERIC_APPROXIMATORS = ["about", "roughly"];
@@ -795,14 +790,11 @@
       );
     }
 
-    function formatDisplayedAnswer(baseAnswer, condition, item) {
-      const itemIndex = stableIndexFromId(item?.id, 1000);
-
+function formatDisplayedAnswer(baseAnswer, condition, item) {
+  const itemIndex = stableIndexFromId(item?.id, 1000);
       if (!condition.hedging) {
-        const prefix = ASSERTIVE_PREFIXES[itemIndex % ASSERTIVE_PREFIXES.length];
-
         return {
-          displayed_answer: `${prefix} ${baseAnswer}`,
+          displayed_answer: baseAnswer,
           hedge_phrase: "",
           hedge_type: "none",
         };
@@ -815,7 +807,7 @@
         const approximatedAnswer = applyNumericApproximator(baseAnswer, approximator);
 
         return {
-          displayed_answer: `The answer is: ${approximatedAnswer}`,
+          displayed_answer: approximatedAnswer,
           hedge_phrase: approximator,
           hedge_type: "approximator",
         };
@@ -1544,7 +1536,6 @@
                 : "manual_researcher_selected",
             hedge_templates_stance: STANCE_HEDGE_PREFIXES,
             hedge_templates_numeric: NUMERIC_APPROXIMATORS,
-            assertive_templates: ASSERTIVE_PREFIXES,
             offer_interview: offerInterview,
           },
           logs,
