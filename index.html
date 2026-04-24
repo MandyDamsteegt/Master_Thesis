@@ -19,6 +19,8 @@
     const ADMIN_CODE = "0000";
     const WEBHOOK_URL = "https://ai-hedging-backend.onrender.com/api/experiment";
 
+    const CONDITION_ORDER = ["C1", "C2", "C3", "C4"];
+    const ASSIGNMENT_COUNTER_KEY = "ai_hedging_assignment_counter_v1";
     const CONDITIONS = [
       { id: "C1", hedging: 0, modality: 0, label: "No hedge + Text" },
       { id: "C2", hedging: 1, modality: 0, label: "Hedge + Text" },
@@ -658,8 +660,17 @@
       },
     ];
 
-    const ASSERTIVE_PREFIX = "The answer is:";
-    const HEDGE_PREFIX = "I think the answer is:";
+    const ASSERTIVE_PREFIXES = [
+      "The answer is:",
+      "The available answer is:",
+    ];
+
+    const STANCE_HEDGE_PREFIXES = [
+      "I think the answer is:",
+      "It seems that the answer is:",
+    ];
+
+    const NUMERIC_APPROXIMATORS = ["about", "roughly"];
 
     function shuffle(array) {
       const arr = [...array];
@@ -766,19 +777,70 @@
         return url;
       }
     }
+    function stableIndexFromId(id, modulo) {
+      const text = String(id || "");
+      let total = 0;
 
-    function formatDisplayedAnswer(baseAnswer, condition) {
-      return condition.hedging
-        ? `${HEDGE_PREFIX} ${baseAnswer}`
-        : `${ASSERTIVE_PREFIX} ${baseAnswer}`;
+      for (let i = 0; i < text.length; i += 1) {
+        total += text.charCodeAt(i);
+      }
+
+      return modulo ? total % modulo : 0;
+    }
+
+    function applyNumericApproximator(answer, approximator) {
+      return String(answer).replace(
+        /\b\d+(\.\d+)?\b/,
+        (match) => `${approximator} ${match}`
+      );
+    }
+
+    function formatDisplayedAnswer(baseAnswer, condition, item) {
+      const itemIndex = stableIndexFromId(item?.id, 1000);
+
+      if (!condition.hedging) {
+        const prefix = ASSERTIVE_PREFIXES[itemIndex % ASSERTIVE_PREFIXES.length];
+
+        return {
+          displayed_answer: `${prefix} ${baseAnswer}`,
+          hedge_phrase: "",
+          hedge_type: "none",
+        };
+      }
+
+      if (item?.type === "numeric") {
+        const approximator =
+          NUMERIC_APPROXIMATORS[itemIndex % NUMERIC_APPROXIMATORS.length];
+
+        const approximatedAnswer = applyNumericApproximator(baseAnswer, approximator);
+
+        return {
+          displayed_answer: `The answer is: ${approximatedAnswer}`,
+          hedge_phrase: approximator,
+          hedge_type: "approximator",
+        };
+      }
+
+      const hedgePrefix =
+        STANCE_HEDGE_PREFIXES[itemIndex % STANCE_HEDGE_PREFIXES.length];
+
+      return {
+        displayed_answer: `${hedgePrefix} ${baseAnswer}`,
+        hedge_phrase: hedgePrefix.replace(":", ""),
+        hedge_type: "stance",
+      };
     }
 
     function applyAnswerStyle(item, correctness, condition) {
       const baseAnswer = correctness ? item.correct_answer : item.incorrect_answer;
+      const formatted = formatDisplayedAnswer(baseAnswer, condition, item);
+
       return {
         ...item,
         correctness,
-        displayed_answer: formatDisplayedAnswer(baseAnswer, condition),
+        displayed_answer: formatted.displayed_answer,
+        hedge_phrase: formatted.hedge_phrase,
+        hedge_type: formatted.hedge_type,
       };
     }
 
@@ -1132,7 +1194,7 @@
       const [adminCodeError, setAdminCodeError] = useState("");
 
       const [participantId, setParticipantId] = useState("");
-      const [assignmentMode, setAssignmentMode] = useState("random");
+      const [assignmentMode, setAssignmentMode] = useState("balanced");
       const [conditionId, setConditionId] = useState("C1");
       const [offerInterview, setOfferInterview] = useState(true);
 
@@ -1316,11 +1378,29 @@
         setter((prev) => ({ ...prev, [key]: value }));
       }
 
+      function getAssignmentCounter() {
+        const raw = localStorage.getItem(ASSIGNMENT_COUNTER_KEY);
+        const parsed = Number(raw);
+        return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+      }
+
+      function incrementAssignmentCounter() {
+        const current = getAssignmentCounter();
+        localStorage.setItem(ASSIGNMENT_COUNTER_KEY, String(current + 1));
+        return current + 1;
+      }
+
       function assignCondition() {
-        if (assignmentMode === "random") {
-          return CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)].id;
+        if (assignmentMode === "manual") {
+          return conditionId;
         }
-        return conditionId;
+
+        const counter = getAssignmentCounter();
+        const assignedId = CONDITION_ORDER[counter % CONDITION_ORDER.length];
+
+        incrementAssignmentCounter();
+
+        return assignedId;
       }
 
       function startParticipantRun() {
@@ -1373,6 +1453,8 @@
             trial_index: currentTrial.trial_index,
             correctness: currentTrial.correctness,
             displayed_answer: currentTrial.displayed_answer,
+            hedge_phrase: currentTrial.hedge_phrase || "",
+            hedge_type: currentTrial.hedge_type || "none",
             verification_mode: verificationMode,
             verify_clicked: verifyCount > 0 ? 1 : 0,
             verify_count: verifyCount,
@@ -1455,6 +1537,14 @@
             interview_modality: interview.modality,
             interview_block_changes: interview.block_changes,
             assignment_mode: assignmentMode,
+            assignment_counter_after_assignment: getAssignmentCounter(),
+            assignment_strategy:
+              assignmentMode === "balanced"
+                ? "quota_balanced_round_robin"
+                : "manual_researcher_selected",
+            hedge_templates_stance: STANCE_HEDGE_PREFIXES,
+            hedge_templates_numeric: NUMERIC_APPROXIMATORS,
+            assertive_templates: ASSERTIVE_PREFIXES,
             offer_interview: offerInterview,
           },
           logs,
@@ -2067,13 +2157,13 @@
                     <label className="block md:col-span-1">
                       <div className="mb-2 text-sm font-medium text-slate-700">Assignment mode</div>
                       <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={assignmentMode} onChange={(e) => setAssignmentMode(e.target.value)}>
+                        <option value="balanced">Balanced assignment</option>
                         <option value="manual">Manual condition</option>
-                        <option value="random">Random condition</option>
                       </select>
                     </label>
                     <label className="block md:col-span-1">
                       <div className="mb-2 text-sm font-medium text-slate-700">Condition</div>
-                      <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 disabled:opacity-50" value={conditionId} onChange={(e) => setConditionId(e.target.value)} disabled={assignmentMode === "random"}>
+                      <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 disabled:opacity-50" value={conditionId} onChange={(e) => setConditionId(e.target.value)} disabled={assignmentMode !== "manual"}>
                         {CONDITIONS.map((c) => (
                           <option key={c.id} value={c.id}>{c.id}</option>
                         ))}
