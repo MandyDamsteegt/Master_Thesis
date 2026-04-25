@@ -1543,6 +1543,14 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       async function persistIntegratedResults(reason = sessionStatus) {
+        alert("Save function started");
+      
+        console.log("Save clicked", {
+          reason,
+          logsLength: logs.length,
+          webhook: WEBHOOK_URL,
+        });
+      
         const payload = buildPayload(reason);
         const safeId = participantId || "participant";
 
