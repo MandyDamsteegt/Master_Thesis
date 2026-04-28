@@ -1191,6 +1191,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [offerInterview, setOfferInterview] = useState(true);
 
       const [screen, setScreen] = useState("landing");
+      const [consentGiven, setConsentGiven] = useState(false);
       const [assignedConditionId, setAssignedConditionId] = useState("C1");
       const [practiceTrials, setPracticeTrials] = useState([]);
       const [mainTrials, setMainTrials] = useState([]);
@@ -1417,8 +1418,9 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setInterviewConsent(offerInterview ? "pending" : "declined");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
+        setConsentGiven(false);
         setSessionStart(Date.now());
-        setScreen("instructions");
+        setScreen("consent");
       }
 
       function finishTrial(finalDecision) {
@@ -1508,6 +1510,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             hedging: assignedCondition.hedging,
             modality: assignedCondition.modality,
             participant_blinded_to_condition_meaning: true,
+            informed_consent_given: consentGiven,
+            consent_timestamp: consentGiven ? Date.now() : "",
             session_start: sessionStart,
             session_end: Date.now(),
             manipulation_uncertainty: manipulationUncertainty,
@@ -1543,7 +1547,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       async function persistIntegratedResults(reason = sessionStatus) {
-        alert("Save function started");
+        // alert("Save function started");
       
         console.log("Save clicked", {
           reason,
@@ -1738,7 +1742,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               </Panel>
             )}
 
-            {!["landing", "instructions", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "complete"].includes(screen) && currentTrial && (
+            {!["landing", "consent", "instructions", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
@@ -1759,7 +1763,71 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 </div>
               </div>
             )}
-
+            {screen === "consent" && (
+              <Panel
+                title="Informed consent"
+                subtitle="Please read this information before taking part in the study."
+              >
+                <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    You are invited to take part in a master thesis study about how people evaluate AI-generated answers.
+                    The study investigates how wording and presentation format may influence trust, verification behaviour,
+                    and decision-making.
+                  </p>
+            
+                  <p>
+                    During the task, you will see a series of general knowledge questions and AI-generated answers.
+                    Some answers may be incorrect. You can accept, reject, or verify answers using supporting information.
+                  </p>
+            
+                  <p>
+                    Participation is voluntary. You may stop at any time without giving a reason. The task involves minimal
+                    risk and only uses general knowledge questions. No sensitive personal topics are included.
+                  </p>
+            
+                  <p>
+                    The study records your participant ID, condition, decisions, verification behaviour, response times,
+                    questionnaire responses, and optional written reflections. No name, email address, or directly identifying
+                    personal information is collected.
+                  </p>
+            
+                  <p>
+                    The collected data will be used only for academic research purposes as part of a University of Amsterdam
+                    master thesis.
+                  </p>
+                </div>
+            
+                <label className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={consentGiven}
+                    onChange={(e) => setConsentGiven(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-slate-300"
+                  />
+                  <span>
+                    I confirm that I have read the information above, I understand that participation is voluntary,
+                    and I agree to take part in this study.
+                  </span>
+                </label>
+            
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
+                    onClick={() => setScreen("instructions")}
+                    disabled={!consentGiven}
+                  >
+                    Continue
+                  </button>
+            
+                  <button
+                    className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"
+                    onClick={() => setScreen("landing")}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </Panel>
+            )}
             {screen === "instructions" && (
               <Panel
                 title="Instructions"
@@ -1997,7 +2065,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               <div className="space-y-6">
                 <LikertBlock title="User experience" items={UEQ_ITEMS} values={ueqResponses} onChange={(key, value) => updateLikertSet(setUeqResponses, key, value)} type="ueq" />
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen(offerInterview ? "interview_invite" : "complete")} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen(offerInterview ? "interview_invite" : "debrief")} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
                 </div>
               </div>
             )}
@@ -2009,7 +2077,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 </div>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => { setInterviewConsent("accepted"); setScreen("interview_questions"); }}>Answer interview questions</button>
-                  <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => { setInterviewConsent("declined"); setScreen("complete"); }}>Skip interview section</button>
+                  <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => { setInterviewConsent("declined"); setScreen("debrief"); }}>Skip interview section</button>
                 </div>
               </Panel>
             )}
@@ -2035,7 +2103,48 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   </label>
                 </div>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("complete")}>Continue to save</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("debrief")}>Continue to save</button>
+                </div>
+              </Panel>
+            )}
+            {screen === "debrief" && (
+              <Panel
+                title="Debriefing"
+                subtitle="Please read this explanation before saving your session."
+              >
+                <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    Thank you for participating in this study.
+                  </p>
+            
+                  <p>
+                    During the task, some AI-generated answers were intentionally incorrect. This was necessary to study
+                    how people calibrate trust in AI systems and whether they choose to accept, reject, or verify AI-generated
+                    answers.
+                  </p>
+            
+                  <p>
+                    The study compares different answer styles, including answers with and without verbal uncertainty cues,
+                    and different output formats, including text and synthetic speech.
+                  </p>
+            
+                  <p>
+                    The purpose of the study is not to test your knowledge, but to understand how interface design may influence
+                    reliance and verification behaviour when AI output may be uncertain or incorrect.
+                  </p>
+            
+                  <p>
+                    Your data will remain anonymous and will be used only for academic research purposes.
+                  </p>
+                </div>
+            
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"
+                    onClick={() => setScreen("complete")}
+                  >
+                    Continue to save
+                  </button>
                 </div>
               </Panel>
             )}
