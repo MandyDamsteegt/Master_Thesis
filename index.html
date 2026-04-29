@@ -1429,7 +1429,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       function startParticipantRun() {
-        const cleanId = `P_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const cleanId =   participantId && participantId.trim()     ? participantId.trim().replace(/[^a-zA-Z0-9_-]/g, "_")     : `P_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         const chosenConditionId = assignCondition();
         const chosenCondition = CONDITIONS.find((c) => c.id === chosenConditionId) ?? CONDITIONS[0];
 
@@ -1579,7 +1579,6 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 : "manual_researcher_selected",
             hedge_templates_stance: STANCE_HEDGE_PREFIXES,
             hedge_templates_numeric: NUMERIC_APPROXIMATORS,
-            offer_interview: offerInterview,
           },
           logs,
         };
@@ -1994,7 +1993,23 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               <Panel
                 title="Answer"
                 subtitle="Please review the answer before making your judgment."
-                actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("decision")}>Continue</button>}
+                actions=
+                {   
+                  <>     
+                    <button       
+                      className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"       
+                      onClick={() => setScreen("question")}     
+                      >       
+                      Back     
+                    </button>     
+                    <button       
+                      className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"       
+                      onClick={() => setScreen("decision")}     
+                      >       
+                      Continue     
+                    </button>   
+                  </> 
+                }
               >
                 <div className="rounded-[1.75rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-8 text-xl leading-relaxed text-slate-900 shadow-sm">
                   <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
