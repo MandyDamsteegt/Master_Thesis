@@ -38,6 +38,15 @@
       6: "Agree",
       7: "Strongly agree",
     };
+    const TRUST_LABELS = {
+      1: "Not at all",
+      2: "Very slightly",
+      3: "Slightly",
+      4: "Moderately",
+      5: "Quite",
+      6: "Very",
+      7: "Extremely",
+    };
 
     const TRUST_ITEMS = [
       { id: "T1", text: "The system is deceptive", reverse: true },
@@ -55,41 +64,43 @@
     ];
 
     const NASA_TLX_ITEMS = [
-      { id: "N1", text: "Mental Demand", left: "Very low", right: "Very high" },
-      { id: "N2", text: "Physical Demand", left: "Very low", right: "Very high" },
-      { id: "N3", text: "Temporal Demand", left: "Very low", right: "Very high" },
-      { id: "N4", text: "Performance", left: "Perfect", right: "Failure" },
-      { id: "N5", text: "Effort", left: "Very low", right: "Very high" },
-      { id: "N6", text: "Frustration", left: "Very low", right: "Very high" },
+      {
+        id: "N1",
+        text: "Mental Demand",
+        description: "How mentally demanding was the task?",
+        left: "Very low",
+        right: "Very high"
+      },
+      {
+        id: "N2",
+        text: "Performance",
+        description: "How successful were you in accomplishing what you were asked to do?",
+        left: "Good",
+        right: "Poor"
+      },
+      {
+        id: "N3",
+        text: "Effort",
+        description: "How hard did you have to work to accomplish your level of performance?",
+        left: "Very low",
+        right: "Very high"
+      },
+      {
+        id: "N4",
+        text: "Frustration",
+        description: "How insecure, discouraged, irritated, stressed, or annoyed did you feel?",
+        left: "Very low",
+        right: "Very high"
+      },
     ];
 
     const UEQ_ITEMS = [
-      { id: "U1", scale: "Attractiveness", left: "unpleasant", right: "pleasant", positiveRight: true },
-      { id: "U2", scale: "Perspicuity", left: "not understandable", right: "understandable", positiveRight: true },
+      { id: "U1", scale: "Clarity", left: "confusing", right: "clear", positiveRight: true },
+      { id: "U2", scale: "Understandability", left: "not understandable", right: "understandable", positiveRight: true },
       { id: "U3", scale: "Efficiency", left: "inefficient", right: "efficient", positiveRight: true },
-      { id: "U4", scale: "Dependability", left: "confusing", right: "clear", positiveRight: true },
-      { id: "U5", scale: "Attractiveness", left: "boring", right: "exciting", positiveRight: true },
-      { id: "U6", scale: "Stimulation", left: "not interesting", right: "interesting", positiveRight: true },
-      { id: "U7", scale: "Attractiveness", left: "conventional", right: "inventive", positiveRight: true },
-      { id: "U8", scale: "Novelty", left: "usual", right: "leading edge", positiveRight: true },
-      { id: "U9", scale: "Dependability", left: "obstructive", right: "supportive", positiveRight: true },
-      { id: "U10", scale: "Attractiveness", left: "good", right: "bad", positiveRight: false },
-      { id: "U11", scale: "Perspicuity", left: "complicated", right: "easy", positiveRight: true },
-      { id: "U12", scale: "Attractiveness", left: "unlikable", right: "pleasing", positiveRight: true },
-      { id: "U13", scale: "Novelty", left: "usual", right: "innovative", positiveRight: true },
-      { id: "U14", scale: "Efficiency", left: "slow", right: "fast", positiveRight: true },
-      { id: "U15", scale: "Dependability", left: "unpredictable", right: "predictable", positiveRight: true },
-      { id: "U16", scale: "Dependability", left: "obstructive", right: "supportive", positiveRight: true },
-      { id: "U17", scale: "Dependability", left: "secure", right: "not secure", positiveRight: false },
-      { id: "U18", scale: "Stimulation", left: "motivating", right: "demotivating", positiveRight: false },
-      { id: "U19", scale: "Dependability", left: "meets expectations", right: "does not meet expectations", positiveRight: false },
-      { id: "U20", scale: "Efficiency", left: "inefficient", right: "efficient", positiveRight: true },
-      { id: "U21", scale: "Perspicuity", left: "clear", right: "confusing", positiveRight: false },
-      { id: "U22", scale: "Perspicuity", left: "impractical", right: "practical", positiveRight: true },
-      { id: "U23", scale: "Efficiency", left: "organized", right: "cluttered", positiveRight: false },
-      { id: "U24", scale: "Attractiveness", left: "attractive", right: "unattractive", positiveRight: false },
-      { id: "U25", scale: "Attractiveness", left: "friendly", right: "unfriendly", positiveRight: false },
-      { id: "U26", scale: "Novelty", left: "conservative", right: "innovative", positiveRight: true },
+      { id: "U4", scale: "Predictability", left: "unpredictable", right: "predictable", positiveRight: true },
+      { id: "U5", scale: "Pleasantness", left: "unpleasant", right: "pleasant", positiveRight: true },
+      { id: "U6", scale: "Interest", left: "not interesting", right: "interesting", positiveRight: true },
     ];
 
     const ITEM_BANK = [
@@ -740,7 +751,7 @@
         const raw = responses[item.id];
         if (!raw) return null;
         const value = Number(raw);
-        return item.id === "N4" ? reverse7(value) : value;
+        return item.text === "Performance" ? reverse7(value) : value;
       }).filter((v) => v != null);
       return scored.length ? mean(scored) : 0;
     }
@@ -1096,7 +1107,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       );
     }
 
-    function Likert({ label, value, onChange, leftLabel, rightLabel }) {
+    function Likert({ label, value, onChange, leftLabel, rightLabel, labels = LIKERT_LABELS }) {
       return (
         <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
           <div className="mb-3 text-sm font-medium text-slate-800">{label}</div>
@@ -1118,7 +1129,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               </button>
             ))}
           </div>
-          <div className="mt-3 text-xs text-slate-500">{LIKERT_LABELS[Number(value)] || ""}</div>
+          <div className="mt-3 text-xs text-slate-500">{labels[Number(value)] || ""}</div>
         </label>
       );
     }
@@ -1145,7 +1156,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 return (
                   <Likert
                     key={key}
-                    label={item.text}
+                    label={`${item.text}: ${item.description}`}
                     value={values[key]}
                     onChange={(value) => onChange(key, value)}
                     leftLabel={item.left}
@@ -1159,6 +1170,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   label={item.text}
                   value={values[key]}
                   onChange={(value) => onChange(key, value)}
+                  labels={TRUST_LABELS}
                 />
               );
             })}
@@ -1174,6 +1186,15 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           return params.get("admin") === "1";
         } catch {
           return false;
+        }
+      }, []);
+      const forcedConditionByQuery = useMemo(() => {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const forced = params.get("condition");
+          return CONDITION_ORDER.includes(forced) ? forced : "";
+        } catch {
+          return "";
         }
       }, []);
 
@@ -1224,6 +1245,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [sourceOpenedDomains, setSourceOpenedDomains] = useState([]);
       const [sourceOpenedUrls, setSourceOpenedUrls] = useState([]);
       const [voiceInfo, setVoiceInfo] = useState({ name: "", lang: "", enabled: false });
+      const [breakStart, setBreakStart] = useState(null);
+      const [breakDurations, setBreakDurations] = useState([]);
 
       const assignedCondition = useMemo(
         () => CONDITIONS.find((c) => c.id === assignedConditionId) ?? CONDITIONS[0],
@@ -1283,6 +1306,12 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           setEvidenceOpenedAt(Date.now());
         } else if (screen !== "evidence") {
           setEvidenceOpenedAt(null);
+        }
+      }, [screen]);
+      
+      useEffect(() => {
+        if (screen === "break") {
+          setBreakStart(Date.now());
         }
       }, [screen]);
 
@@ -1384,6 +1413,10 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       function assignCondition() {
+        if (forcedConditionByQuery) {
+          return forcedConditionByQuery;
+        }
+      
         if (assignmentMode === "manual") {
           return conditionId;
         }
@@ -1533,6 +1566,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             session_status: reason,
             practice_trials_completed: practiceTrials.length,
             main_trials_planned: mainTrials.length,
+            break_durations_ms: breakDurations,
+            break_count: breakDurations.length,
             interview_strategy: interview.strategy,
             interview_hedges: interview.hedges,
             interview_modality: interview.modality,
@@ -1931,8 +1966,25 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               <Panel
                 title={isPractice ? `Practice question ${trialPointer + 1}` : `Question ${currentMainTrialNumber}`}
                 subtitle="Please read the question carefully before moving on."
-                actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("answer")}>Show answer</button>}
-              >
+                actions={
+              <>
+                {isPractice && (
+                  <button
+                    className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"
+                    onClick={() => setScreen("instructions")}
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"
+                  onClick={() => setScreen("answer")}
+                >
+                  Show answer
+                </button>
+              </>
+            }
+                >
                 <div className="rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-8 text-2xl font-medium leading-relaxed text-slate-900 shadow-inner">
                   {currentTrial.question}
                 </div>
@@ -1945,7 +1997,10 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 subtitle="Please review the answer before making your judgment."
                 actions={<button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("decision")}>Continue</button>}
               >
-                <div className="rounded-[1.75rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-8 text-xl leading-relaxed text-slate-900 shadow-sm">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+                  AI Assistant Answer
+                </div>
+                <div>
                   {currentTrial.displayed_answer}
                 </div>
                 {currentTrial?.modality === 1 && (
@@ -1971,9 +2026,14 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
             {screen === "decision" && currentTrial && (
               <Panel title="Your judgment" subtitle="What is your decision about this answer?">
-                <div className="rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 text-lg leading-relaxed text-slate-900">
+                <div className="rounded-[1.75rem] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-8 text-xl leading-relaxed text-slate-900 shadow-sm">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+                  AI Assistant Answer
+                </div>
+                <div>
                   {currentTrial.displayed_answer}
                 </div>
+              </div>
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   You may decide immediately or verify the answer by opening retrieved reference snippets.
                 </div>
@@ -2121,7 +2181,18 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
             {screen === "trust_scale" && (
               <div className="space-y-6">
-                <LikertBlock title="Trust and perceived reliability" items={TRUST_ITEMS} values={trustResponses} onChange={(key, value) => updateLikertSet(setTrustResponses, key, value)} />
+                <Panel title="Trust and perceived reliability">
+                  <p className="text-sm leading-7 text-slate-700">
+                    Below is a list of statements for evaluating trust in the system.
+                    Please select the answer option on each line that best describes your feeling
+                    or impression of the system while using it.
+                  </p>
+                  <p className="mt-3 text-sm font-medium text-slate-700">
+                    1 = not at all · 7 = extremely
+                  </p>
+                </Panel>
+            
+                <LikertBlock title="Statements" items={TRUST_ITEMS} values={trustResponses} onChange={(key, value) => updateLikertSet(setTrustResponses, key, value)} />
                 <div className="flex flex-wrap gap-3">
                   <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("workload_scale")} disabled={!allLikertAnswered(trustResponses)}>Continue</button>
                 </div>
@@ -2139,9 +2210,9 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
             {screen === "ueq_scale" && (
               <div className="space-y-6">
-                <LikertBlock title="User experience" items={UEQ_ITEMS} values={ueqResponses} onChange={(key, value) => updateLikertSet(setUeqResponses, key, value)} type="ueq" />
+                <LikertBlock title="Perceived system experience" items={UEQ_ITEMS} values={ueqResponses} onChange={(key, value) => updateLikertSet(setUeqResponses, key, value)} type="ueq" />
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen(offerInterview ? "interview_invite" : "debrief")} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("interview_questions")} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
                 </div>
               </div>
             )}
@@ -2170,7 +2241,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                     <textarea className="min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={interview.hedges} onChange={(e) => setInterview((p) => ({ ...p, hedges: e.target.value }))} />
                   </label>
                   <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                    <div className="mb-2 text-sm font-medium text-slate-800">Did the voice or text format influence how confident the assistant felt?</div>
+                    <div className="mb-2 text-sm font-medium text-slate-800">Did the voice or text format influence your experience or how you perceived the assistant? If so, please describe how.</div>
                     <textarea className="min-h-[90px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3" value={interview.modality} onChange={(e) => setInterview((p) => ({ ...p, modality: e.target.value }))} />
                   </label>
                   <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
@@ -2189,6 +2260,9 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 subtitle="Please read this explanation before saving your session."
               >
                 <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 font-semibold text-amber-900">
+                    Please continue to the next page to save your study data.
+                  </p>
                   <p>
                     Thank you for participating in this study.
                   </p>
@@ -2237,7 +2311,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 )}
                 {saveStatus && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{saveStatus}</div>}
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => persistIntegratedResults(sessionStatus)}>Save all data</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => persistIntegratedResults(sessionStatus)} disabled={!!saveStatus} > {saveStatus ? "Saved" : "Save all data"} </button>
                   <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => setScreen("landing")}>Back to start</button>
                 </div>
               </Panel>
