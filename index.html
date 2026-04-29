@@ -95,12 +95,17 @@
     ];
 
     const UEQ_ITEMS = [
-      { id: "U1", scale: "Clarity", left: "confusing", right: "clear", positiveRight: true },
-      { id: "U2", scale: "Understandability", left: "not understandable", right: "understandable", positiveRight: true },
-      { id: "U3", scale: "Efficiency", left: "inefficient", right: "efficient", positiveRight: true },
-      { id: "U4", scale: "Predictability", left: "unpredictable", right: "predictable", positiveRight: true },
-      { id: "U5", scale: "Pleasantness", left: "unpleasant", right: "pleasant", positiveRight: true },
-      { id: "U6", scale: "Interest", left: "not interesting", right: "interesting", positiveRight: true },
+      // Pragmatic quality (usefulness, clarity, efficiency)
+      { id: "U1", scale: "Pragmatic", left: "confusing", right: "clear", positiveRight: true },
+      { id: "U2", scale: "Pragmatic", left: "inefficient", right: "efficient", positiveRight: true },
+      { id: "U3", scale: "Pragmatic", left: "not understandable", right: "understandable", positiveRight: true },
+      { id: "U4", scale: "Pragmatic", left: "unpredictable", right: "predictable", positiveRight: true },
+    
+      // Hedonic quality (experience / affect)
+      { id: "U5", scale: "Hedonic", left: "boring", right: "exciting", positiveRight: true },
+      { id: "U6", scale: "Hedonic", left: "dull", right: "creative", positiveRight: true },
+      { id: "U7", scale: "Hedonic", left: "unpleasant", right: "pleasant", positiveRight: true },
+      { id: "U8", scale: "Hedonic", left: "not interesting", right: "interesting", positiveRight: true },
     ];
 
     const ITEM_BANK = [
@@ -1197,7 +1202,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           return "";
         }
       }, []);
-
+      
+      const randomizedUeqItems = useMemo(() => shuffle(UEQ_ITEMS), []);
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -2243,7 +2249,21 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
             {screen === "ueq_scale" && (
               <div className="space-y-6">
-                <LikertBlock title="Perceived system experience" items={UEQ_ITEMS} values={ueqResponses} onChange={(key, value) => updateLikertSet(setUeqResponses, key, value)} type="ueq" />
+                <Panel title="System experience" 
+                  subtitle="Please indicate how you experienced the system during the task.">   
+                  <div className="grid gap-4">     
+                    {randomizedUeqItems.map((item) => (       
+                    <Likert         
+                      key={item.id}         
+                      label={`${item.left} — ${item.right}`}         
+                      value={ueqResponses[item.id]}         
+                      onChange={(value) => updateLikertSet(setUeqResponses, item.id, value)}         
+                      leftLabel={item.left}         
+                      rightLabel={item.right}       
+                      />     
+                  ))}   
+                  </div> 
+                </Panel>
                 <div className="flex flex-wrap gap-3">
                   <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => {   setInterviewConsent("accepted");   setScreen("interview_questions"); }} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
                 </div>
@@ -2271,7 +2291,18 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   </label>
                 </div>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => setScreen("debrief")}>Continue to save</button>
+                  <button   
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"   
+                    onClick={() => setScreen("debrief")}   
+                    disabled={     
+                      !interview.strategy.trim() ||     
+                      !interview.hedges.trim() ||     
+                      !interview.modality.trim() ||     
+                      !interview.block_changes.trim()   
+                    } 
+                  >   
+                    Continue to save 
+                  </button>
                 </div>
               </Panel>
             )}
