@@ -1397,7 +1397,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       function startParticipantRun() {
-        const cleanId = participantId.trim() || `P${Math.floor(Math.random() * 100000)}`;
+        const cleanId = `P_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         const chosenConditionId = assignCondition();
         const chosenCondition = CONDITIONS.find((c) => c.id === chosenConditionId) ?? CONDITIONS[0];
 
@@ -1421,6 +1421,11 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setConsentGiven(false);
         setSessionStart(Date.now());
         setScreen("consent");
+      }
+      function declineConsent() {
+        setConsentGiven(false);
+        setSessionStatus("no_consent");
+        setScreen("no_consent_thankyou");
       }
 
       function finishTrial(finalDecision) {
@@ -1701,48 +1706,33 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
             {screen === "landing" && (
               <Panel
-                title="Start participant session"
-                subtitle="Enter a participant ID and start the experiment."
+                title="Welcome"
+                subtitle="Welcome to the AI Answer Evaluation Study."
                 actions={
                   <button
                     className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"
                     onClick={startParticipantRun}
                   >
-                    Start experiment
+                    Start study
                   </button>
                 }
               >
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <div className="mb-2 text-sm font-medium text-slate-700">Participant ID</div>
-                    <input
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-                      value={participantId}
-                      onChange={(e) => setParticipantId(e.target.value)}
-                      placeholder="P001"
-                    />
-                  </label>
-
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 flex items-center">
-                    Participants are assigned automatically to a study version.
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="inline-flex items-center gap-3 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={offerInterview}
-                      onChange={(e) => setOfferInterview(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300"
-                    />
-                    Include optional interview section at the end
-                  </label>
+                <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    In this study, you will review AI-generated answers to general knowledge questions.
+                    Some answers may be correct and some may be incorrect.
+                  </p>
+                  <p>
+                    Your task is to decide whether to accept, reject, or verify each answer before making a final decision.
+                  </p>
+                  <p>
+                    Your session will be assigned automatically. You do not need to enter a participant ID.
+                  </p>
                 </div>
               </Panel>
             )}
 
-            {!["landing", "consent", "instructions", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
+            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
@@ -1766,35 +1756,61 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             {screen === "consent" && (
               <Panel
                 title="Informed consent"
-                subtitle="Please read this information before taking part in the study."
+                subtitle="Please read this information before deciding whether to take part."
               >
-                <div className="space-y-4 text-sm leading-7 text-slate-700">
-                  <p>
-                    You are invited to take part in a master thesis study about how people evaluate AI-generated answers.
-                    The study investigates how wording and presentation format may influence trust, verification behaviour,
-                    and decision-making.
-                  </p>
+                <div className="space-y-5 text-sm leading-7 text-slate-700">
+                  <section>
+                    <h3 className="font-semibold text-slate-900">Study purpose</h3>
+                    <p>
+                      You are invited to take part in a master thesis study at the University of Amsterdam.
+                      The study investigates how people evaluate AI-generated answers and how wording and presentation format may influence trust, verification behaviour, and decision-making.
+                    </p>
+                  </section>
             
-                  <p>
-                    During the task, you will see a series of general knowledge questions and AI-generated answers.
-                    Some answers may be incorrect. You can accept, reject, or verify answers using supporting information.
-                  </p>
+                  <section>
+                    <h3 className="font-semibold text-slate-900">What you will do</h3>
+                    <p>
+                      You will complete a series of general knowledge questions. For each question, you will see an AI-generated answer.
+                      Some answers may be incorrect. You can accept, reject, or verify the answer using supporting information.
+                    </p>
+                  </section>
             
-                  <p>
-                    Participation is voluntary. You may stop at any time without giving a reason. The task involves minimal
-                    risk and only uses general knowledge questions. No sensitive personal topics are included.
-                  </p>
+                  <section>
+                    <h3 className="font-semibold text-slate-900">Voluntary participation</h3>
+                    <p>
+                      Participation is voluntary. You may stop at any time without giving a reason.
+                    </p>
+                  </section>
             
-                  <p>
-                    The study records your participant ID, condition, decisions, verification behaviour, response times,
-                    questionnaire responses, and optional written reflections. No name, email address, or directly identifying
-                    personal information is collected.
-                  </p>
+                  <section>
+                    <h3 className="font-semibold text-slate-900">Risks and discomforts</h3>
+                    <p>
+                      The study involves minimal risk. The task uses general knowledge questions and does not include sensitive personal topics.
+                      Because this is an online study, browser, device, audio settings, internet connection, and available synthetic voices may differ between participants.
+                    </p>
+                  </section>
             
-                  <p>
-                    The collected data will be used only for academic research purposes as part of a University of Amsterdam
-                    master thesis.
-                  </p>
+                  <section>
+                    <h3 className="font-semibold text-slate-900">Data collected</h3>
+                    <p>
+                      The study records an automatically generated participant ID, assigned condition, decisions, verification behaviour,
+                      response times, questionnaire responses, and written reflection responses. No name, email address, or directly identifying personal information is collected.
+                    </p>
+                  </section>
+            
+                  <section>
+                    <h3 className="font-semibold text-slate-900">Confidentiality and anonymisation</h3>
+                    <p>
+                      The collected data will be treated confidentially and analysed anonymously. Results will be reported only at group level.
+                    </p>
+                  </section>
+            
+                  <section>
+                    <h3 className="font-semibold text-slate-900">Data use</h3>
+                    <p>
+                      The data will be used only for academic research purposes as part of a University of Amsterdam master thesis.
+                    </p>
+                  </section>
                 </div>
             
                 <label className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
@@ -1805,27 +1821,87 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                     className="mt-1 h-4 w-4 rounded border-slate-300"
                   />
                   <span>
-                    I confirm that I have read the information above, I understand that participation is voluntary,
-                    and I agree to take part in this study.
+                    I have read the information above, I understand that participation is voluntary,
+                    and I consent to take part in this study.
                   </span>
                 </label>
             
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button
                     className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
-                    onClick={() => setScreen("instructions")}
+                    onClick={() => setScreen(assignedCondition.modality === 1 ? "audio_test" : "instructions")}
                     disabled={!consentGiven}
                   >
-                    Continue
+                    I agree and continue
                   </button>
             
                   <button
                     className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"
-                    onClick={() => setScreen("landing")}
+                    onClick={declineConsent}
                   >
-                    Cancel
+                    I do not agree
                   </button>
                 </div>
+              </Panel>
+            )}
+            {screen === "no_consent_thankyou" && (
+              <Panel
+                title="Thank you"
+                subtitle="Thank you for taking the time to read the informed consent form."
+              >
+                <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    You did not consent to take part in this study. No experiment data will be collected.
+                  </p>
+                  <p>
+                    You may now close this page.
+                  </p>
+                </div>
+              </Panel>
+            )}
+            {screen === "audio_test" && (
+              <Panel
+                title="Audio check"
+                subtitle="This session includes spoken AI answers. Please test whether you can hear the audio."
+              >
+                <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    Some answers in this session will be spoken aloud using synthetic speech.
+                    Please make sure your sound is on and that you can hear the test sentence.
+                  </p>
+            
+                  <div className="rounded-3xl border border-violet-100 bg-violet-50 p-5 text-violet-900">
+                    Test sentence: “This is an audio test for the AI answer evaluation study.”
+                  </div>
+                </div>
+            
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    className="rounded-2xl bg-violet-700 px-6 py-3 text-sm font-medium text-white"
+                    onClick={() =>
+                      speakText(
+                        "This is an audio test for the AI answer evaluation study.",
+                        true,
+                        (resolvedVoice) => setVoiceInfo(resolvedVoice)
+                      )
+                    }
+                  >
+                    Play audio test
+                  </button>
+            
+                  <button
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"
+                    onClick={() => setScreen("instructions")}
+                  >
+                    I can hear the audio
+                  </button>
+                </div>
+            
+                {voiceInfo.name ? (
+                  <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                    Voice detected: {voiceInfo.name} ({voiceInfo.lang})
+                  </div>
+                ) : null}
               </Panel>
             )}
             {screen === "instructions" && (
@@ -2032,7 +2108,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             )}
 
             {screen === "manipulation_checks" && (
-              <Panel title="Manipulation checks" subtitle="Please answer the following items about the assistant's wording.">
+              <Panel title="Assistant’s wording" subtitle="Please answer the following items about how the assistant communicated.">
                 <div className="grid gap-4">
                   <Likert label="The assistant expressed uncertainty in its wording." value={manipulationUncertainty} onChange={setManipulationUncertainty} />
                   <Likert label="The assistant sounded certain." value={manipulationCertainty} onChange={setManipulationCertainty} />
