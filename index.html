@@ -1588,7 +1588,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setSessionStatus("ended_early");
         setVerificationMode("none");
         setIsSearching(false);
-        setScreen("manipulation_checks");
+        setScreen("early_exit");
       }
 
       function loadSavedSessions() {
@@ -1732,7 +1732,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               </Panel>
             )}
 
-            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
+            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "early_exit", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
@@ -2239,6 +2239,41 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => persistIntegratedResults(sessionStatus)}>Save all data</button>
                   <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => setScreen("landing")}>Back to start</button>
+                </div>
+              </Panel>
+            )}
+            
+            {screen === "early_exit" && (
+              <Panel
+                title="Session ended"
+                subtitle="You have ended the study early."
+              >
+                <div className="space-y-4 text-sm leading-7 text-slate-700">
+                  <p>
+                    Your session has been stopped. You can still save your data if you wish.
+                  </p>
+                </div>
+                {saveStatus && (
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    {saveStatus}
+                  </div>
+                )}
+            
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
+                    onClick={() => persistIntegratedResults("ended_early")}
+                    disabled={!!saveStatus}
+                  >
+                    {saveStatus ? "Saved" : "Save partial data"}
+                  </button>
+            
+                  <button
+                    className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"
+                    onClick={() => setScreen("landing")}
+                  >
+                    Exit without saving
+                  </button>
                 </div>
               </Panel>
             )}
