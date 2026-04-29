@@ -2232,18 +2232,6 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               </div>
             )}
 
-            {screen === "interview_invite" && (
-              <Panel title="Final reflection questions" subtitle="You may optionally provide some final reflective responses about the task.">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
-                  This section is optional. You may skip it and save your session immediately.
-                </div>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white" onClick={() => { setInterviewConsent("accepted"); setScreen("interview_questions"); }}>Answer interview questions</button>
-                  <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => { setInterviewConsent("declined"); setScreen("debrief"); }}>Skip interview section</button>
-                </div>
-              </Panel>
-            )}
-
             {screen === "interview_questions" && (
               <Panel title="Final reflection questions" subtitle="Please answer the following open-ended questions before continuing.">
                 <div className="grid gap-4">
@@ -2317,7 +2305,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             {screen === "complete" && (
               <Panel title="End of session" subtitle="Press the button below to save all experiment data and session metadata.">
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
-                  All collected information will be saved, including trial logs, manipulation checks, trust, workload, user-experience responses, optional interview responses, and session status.
+                  All collected information will be saved, including trial logs, manipulation checks, trust, workload, user-experience responses, final reflection responses, and session status.
                 </div>
                 {!WEBHOOK_URL && (
                   <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -2478,7 +2466,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                       </select>
                     </label>
                     <label className="block md:col-span-1">
-                      <div className="mb-2 text-sm font-medium text-slate-700">Optional interview</div>
+                      <div className="mb-2 text-sm font-medium text-slate-700">Final reflection questions</div>
                       <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={offerInterview ? "yes" : "no"} onChange={(e) => setOfferInterview(e.target.value === "yes")}>
                         <option value="yes">Offer interview section</option>
                         <option value="no">Skip interview section</option>
