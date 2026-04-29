@@ -1429,7 +1429,11 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       function startParticipantRun() {
-        const cleanId =   participantId && participantId.trim()     ? participantId.trim().replace(/[^a-zA-Z0-9_-]/g, "_")     : `P_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const cleanId =
+          participantId && participantId.trim()     
+            ? participantId.trim().replace(/[^a-zA-Z0-9_-]/g, "_")     
+            : `P_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        
         const chosenConditionId = assignCondition();
         const chosenCondition = CONDITIONS.find((c) => c.id === chosenConditionId) ?? CONDITIONS[0];
 
