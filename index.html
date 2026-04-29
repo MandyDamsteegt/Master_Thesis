@@ -1209,7 +1209,6 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [participantId, setParticipantId] = useState("");
       const [assignmentMode, setAssignmentMode] = useState("balanced");
       const [conditionId, setConditionId] = useState("C1");
-      const [offerInterview, setOfferInterview] = useState(true);
 
       const [screen, setScreen] = useState("landing");
       const [consentGiven, setConsentGiven] = useState(false);
@@ -1448,7 +1447,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setTrustResponses(emptyLikertSet(TRUST_ITEMS));
         setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
         setUeqResponses(emptyLikertSet(UEQ_ITEMS));
-        setInterviewConsent(offerInterview ? "pending" : "declined");
+        setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
         setConsentGiven(false);
@@ -2463,13 +2462,6 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                         {CONDITIONS.map((c) => (
                           <option key={c.id} value={c.id}>{c.id}</option>
                         ))}
-                      </select>
-                    </label>
-                    <label className="block md:col-span-1">
-                      <div className="mb-2 text-sm font-medium text-slate-700">Final reflection questions</div>
-                      <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" value={offerInterview ? "yes" : "no"} onChange={(e) => setOfferInterview(e.target.value === "yes")}>
-                        <option value="yes">Offer interview section</option>
-                        <option value="no">Skip interview section</option>
                       </select>
                     </label>
                     <div className="flex items-end">
