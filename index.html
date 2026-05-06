@@ -1217,7 +1217,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         }
       }, []);
       
-      const randomizedUeqItems = useMemo(() => shuffle(UX_ITEMS), []);
+      const randomizedUxItems = useMemo(() => shuffle(UX_ITEMS), []);
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -1246,7 +1246,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [manipulationCertainty, setManipulationCertainty] = useState("");
       const [trustResponses, setTrustResponses] = useState(emptyLikertSet(TRUST_ITEMS));
       const [workloadResponses, setWorkloadResponses] = useState(emptyLikertSet(NASA_TLX_ITEMS));
-      const [ueqResponses, setUeqResponses] = useState(emptyLikertSet(UX_ITEMS));
+      const [uxResponses, setUxResponses] = useState(emptyLikertSet(UX_ITEMS));
       const [interviewConsent, setInterviewConsent] = useState("declined");
       const [interview, setInterview] = useState({
         strategy: "",
@@ -1474,7 +1474,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setManipulationCertainty("");
         setTrustResponses(emptyLikertSet(TRUST_ITEMS));
         setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
-        setUeqResponses(emptyLikertSet(UX_ITEMS));
+        setUxResponses(emptyLikertSet(UX_ITEMS));
         setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
@@ -1587,8 +1587,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             trust_score_mean: scoreTrust(trustResponses),
             workload_responses: workloadResponses,
             nasa_tlx_raw_mean: scoreRawNasaTlx(workloadResponses),
-            ueq_responses: ueqResponses,
-            ueq_scale_scores: scoreUeq(ueqResponses),
+            ux_responses: uxResponses,
+            ux_scale_scores: scoreUx(uxResponses),
             interview_consent: interviewConsent,
             researcher_notes: "",
             n_trials_completed: logs.length,
@@ -1804,7 +1804,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               </Panel>
             )}
 
-            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "early_exit", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ueq_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
+            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "early_exit", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ux_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
