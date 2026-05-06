@@ -108,19 +108,12 @@
       },
     ];
     
-        const UX_ITEMS = [
-          // Adapted short user experience measure: pragmatic quality
-          { id: "U1", scale: "Pragmatic", left: "confusing", right: "clear", positiveRight: true },
-          { id: "U2", scale: "Pragmatic", left: "inefficient", right: "efficient", positiveRight: true },
-          { id: "U3", scale: "Pragmatic", left: "not understandable", right: "understandable", positiveRight: true },
-          { id: "U4", scale: "Pragmatic", left: "unpredictable", right: "predictable", positiveRight: true },
-        
-          // Adapted short user experience measure: hedonic quality
-          { id: "U5", scale: "Hedonic", left: "boring", right: "exciting", positiveRight: true },
-          { id: "U6", scale: "Hedonic", left: "dull", right: "creative", positiveRight: true },
-          { id: "U7", scale: "Hedonic", left: "unpleasant", right: "pleasant", positiveRight: true },
-          { id: "U8", scale: "Hedonic", left: "not interesting", right: "interesting", positiveRight: true },
-        ];
+      const UX_ITEMS = [
+        { id: "X1", scale: "Exploratory usability", left: "confusing", right: "clear", positiveRight: true },
+        { id: "X2", scale: "Exploratory usability", left: "inefficient", right: "efficient", positiveRight: true },
+        { id: "X3", scale: "Exploratory usability", left: "not understandable", right: "understandable", positiveRight: true },
+        { id: "X4", scale: "Exploratory usability", left: "unpredictable", right: "predictable", positiveRight: true },
+      ];
 
     const ITEM_BANK = [
       {
@@ -1128,28 +1121,39 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
     function Likert({ label, value, onChange, leftLabel, rightLabel, labels = LIKERT_LABELS }) {
       return (
-        <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+        <div className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
           <div className="mb-3 text-sm font-medium text-slate-800">{label}</div>
+    
           {(leftLabel || rightLabel) && (
             <div className="mb-2 flex justify-between text-xs text-slate-500">
               <span>{leftLabel || ""}</span>
               <span>{rightLabel || ""}</span>
             </div>
           )}
-          <div className="grid grid-cols-7 gap-2">
+    
+          <div className="grid grid-cols-7 gap-3" role="radiogroup" aria-label={label}>
             {LIKERT_OPTIONS.map((num) => (
               <button
                 key={num}
                 type="button"
+                role="radio"
+                aria-checked={value === String(num)}
                 onClick={() => onChange(String(num))}
-                className={`rounded-2xl px-3 py-3 text-sm font-medium transition ${value === String(num) ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"}`}
+                className={`rounded-2xl px-3 py-4 text-sm font-medium transition ${
+                  value === String(num)
+                    ? "bg-slate-900 text-white ring-2 ring-slate-400"
+                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                }`}
               >
                 {num}
               </button>
             ))}
           </div>
-          <div className="mt-3 text-xs text-slate-500">{labels[Number(value)] || ""}</div>
-        </label>
+    
+          <div className="mt-3 text-xs text-slate-500">
+            {value ? `Selected: ${value}${labels[Number(value)] ? ` · ${labels[Number(value)]}` : ""}` : "No answer selected yet."}
+          </div>
+        </div>
       );
     }
 
@@ -2329,16 +2333,23 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 </div>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button   
-                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"   
-                    onClick={() => setScreen("complete")}   
-                    disabled={     
+                    className="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"   
+                    onClick={async () => {
+                      await persistIntegratedResults("completed");
+                      setScreen("complete");
+                    }}   
+                    disabled={
+                      isSaving ||
                       !interview.strategy.trim() ||     
                       !interview.hedges.trim() ||     
                       !interview.modality.trim() ||     
                       !interview.block_changes.trim()   
                     } 
-                  >   
-                    Continue to save 
+                  >
+                    {isSaving && (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    )}
+                    {isSaving ? "Saving..." : "Submit and save data"}
                   </button>
                 </div>
               </Panel>
@@ -2346,7 +2357,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           
 
             {screen === "complete" && (
-              <Panel title="End of session" subtitle="Please read the debriefing and save your study data.">
+              <Panel title="Thank you" subtitle="Your session has been completed.">
                 <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
                   <p>
                     Thank you for participating in this study.
@@ -2361,25 +2372,20 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                     Your data will remain anonymous and will be used only for academic research purposes.
                   </p>
                 </div>
-                {!WEBHOOK_URL && (
-                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    This build stores data locally and downloads files on this device. For real deployment to many participants, connect a webhook or server endpoint.
+            
+                {saveStatus && (
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    {saveStatus}
                   </div>
                 )}
-                {saveStatus && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{saveStatus}</div>}
+            
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <button   
-                    className="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"   
-                    onClick={() => persistIntegratedResults(sessionStatus)}   
-                    disabled={!!saveStatus || isSaving} 
-                    >   
-                    {isSaving && (     
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />   
-                    )}   
-                    {isSaving ? "Saving..." : 
-                      saveStatus ? "Saved" : "Save all data"} 
+                  <button
+                    className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"
+                    onClick={() => setScreen("landing")}
+                  >
+                    Back to start
                   </button>
-                  <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => setScreen("landing")}>Back to start</button>
                 </div>
               </Panel>
             )}
