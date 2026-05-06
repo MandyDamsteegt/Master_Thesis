@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Hedging Experiment Hub</title>
+  <title>AI Answer Evaluation Task</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -73,40 +73,54 @@
       },
       {
         id: "N2",
+        text: "Physical Demand",
+        description: "How physically demanding was the task?",
+        left: "Very low",
+        right: "Very high"
+      },
+      {
+        id: "N3",
+        text: "Temporal Demand",
+        description: "How hurried or rushed was the pace of the task?",
+        left: "Very low",
+        right: "Very high"
+      },
+      {
+        id: "N4",
         text: "Performance",
         description: "How successful were you in accomplishing what you were asked to do?",
         left: "Good",
         right: "Poor"
       },
       {
-        id: "N3",
+        id: "N5",
         text: "Effort",
         description: "How hard did you have to work to accomplish your level of performance?",
         left: "Very low",
         right: "Very high"
       },
       {
-        id: "N4",
+        id: "N6",
         text: "Frustration",
         description: "How insecure, discouraged, irritated, stressed, or annoyed did you feel?",
         left: "Very low",
         right: "Very high"
       },
     ];
-
-    const UEQ_ITEMS = [
-      // Pragmatic quality (usefulness, clarity, efficiency)
-      { id: "U1", scale: "Pragmatic", left: "confusing", right: "clear", positiveRight: true },
-      { id: "U2", scale: "Pragmatic", left: "inefficient", right: "efficient", positiveRight: true },
-      { id: "U3", scale: "Pragmatic", left: "not understandable", right: "understandable", positiveRight: true },
-      { id: "U4", scale: "Pragmatic", left: "unpredictable", right: "predictable", positiveRight: true },
     
-      // Hedonic quality (experience / affect)
-      { id: "U5", scale: "Hedonic", left: "boring", right: "exciting", positiveRight: true },
-      { id: "U6", scale: "Hedonic", left: "dull", right: "creative", positiveRight: true },
-      { id: "U7", scale: "Hedonic", left: "unpleasant", right: "pleasant", positiveRight: true },
-      { id: "U8", scale: "Hedonic", left: "not interesting", right: "interesting", positiveRight: true },
-    ];
+        const UEQ_ITEMS = [
+          // Pragmatic quality (usefulness, clarity, efficiency)
+          { id: "U1", scale: "Pragmatic", left: "confusing", right: "clear", positiveRight: true },
+          { id: "U2", scale: "Pragmatic", left: "inefficient", right: "efficient", positiveRight: true },
+          { id: "U3", scale: "Pragmatic", left: "not understandable", right: "understandable", positiveRight: true },
+          { id: "U4", scale: "Pragmatic", left: "unpredictable", right: "predictable", positiveRight: true },
+        
+          // Hedonic quality (experience / affect)
+          { id: "U5", scale: "Hedonic", left: "boring", right: "exciting", positiveRight: true },
+          { id: "U6", scale: "Hedonic", left: "dull", right: "creative", positiveRight: true },
+          { id: "U7", scale: "Hedonic", left: "unpleasant", right: "pleasant", positiveRight: true },
+          { id: "U8", scale: "Hedonic", left: "not interesting", right: "interesting", positiveRight: true },
+        ];
 
     const ITEM_BANK = [
       {
@@ -1240,7 +1254,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         modality: "",
         block_changes: "",
       });
-      const [saveStatus, setSaveStatus] = useState("");
+      const [saveStatus, setSaveStatus] = useState(""); 
+      const [isSaving, setIsSaving] = useState(false);
       const [verificationMode, setVerificationMode] = useState("none");
       const [isSearching, setIsSearching] = useState(false);
 
@@ -1250,6 +1265,9 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [sourceOpenedDomains, setSourceOpenedDomains] = useState([]);
       const [sourceOpenedUrls, setSourceOpenedUrls] = useState([]);
       const [voiceInfo, setVoiceInfo] = useState({ name: "", lang: "", enabled: false });
+      const AUDIO_SECRET_WORD = "joy";
+      const [audioSecretInput, setAudioSecretInput] = useState("");
+      const [audioTestPlayed, setAudioTestPlayed] = useState(false);
       const [breakStart, setBreakStart] = useState(null);
       const [breakDurations, setBreakDurations] = useState([]);
 
@@ -1460,6 +1478,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
+        setAudioSecretInput("");
+        setAudioTestPlayed(false);
         setConsentGiven(false);
         setSessionStart(Date.now());
         setScreen("consent");
@@ -1595,7 +1615,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       }
 
       async function persistIntegratedResults(reason = sessionStatus) {
-        // alert("Save function started");
+        setIsSaving(true);
+        setSaveStatus("");
       
         console.log("Save clicked", {
           reason,
@@ -1605,25 +1626,33 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       
         const payload = buildPayload(reason);
         const safeId = participantId || "participant";
-
-        localStorage.setItem(`${STORAGE_PREFIX}${safeId}_${Date.now()}`, JSON.stringify(payload));
-        saveTextFile(`${safeId}_session.json`, JSON.stringify(payload, null, 2), "application/json");
-        saveTextFile(`${safeId}_trials.csv`, asCsv(payload.logs), "text/csv;charset=utf-8;");
-
-        if (WEBHOOK_URL) {
-          try {
-            const response = await fetch(WEBHOOK_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            setSaveStatus("Results were saved locally and sent successfully.");
-          } catch {
-            setSaveStatus("Results were saved locally, but automatic sending failed.");
+      
+        try {
+          localStorage.setItem(`${STORAGE_PREFIX}${safeId}_${Date.now()}`, JSON.stringify(payload));
+          saveTextFile(`${safeId}_session.json`, JSON.stringify(payload, null, 2), "application/json");
+          saveTextFile(`${safeId}_trials.csv`, asCsv(payload.logs), "text/csv;charset=utf-8;");
+      
+          if (WEBHOOK_URL) {
+            try {
+              const response = await fetch(WEBHOOK_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+      
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+              setSaveStatus("Results were saved locally and sent successfully.");
+            } catch {
+              setSaveStatus("Results were saved locally, but automatic sending failed.");
+            }
+          } else {
+            setSaveStatus("Results were saved locally and downloaded on this device.");
           }
-        } else {
-          setSaveStatus("Results were saved locally and downloaded on this device.");
+        } catch {
+          setSaveStatus("Saving failed. Please contact the researcher.");
+        } finally {
+          setIsSaving(false);
         }
       }
 
@@ -1905,46 +1934,57 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             {screen === "audio_test" && (
               <Panel
                 title="Audio check"
-                subtitle="This session includes spoken AI answers. Please test whether you can hear the audio."
+                subtitle="This session includes spoken answers. Please test whether you can hear the audio clearly."
               >
                 <div className="space-y-4 text-sm leading-7 text-slate-700">
                   <p>
                     Some answers in this session will be spoken aloud using synthetic speech.
-                    Please make sure your sound is on and that you can hear the test sentence.
+                    Please make sure your sound is on and adjust the volume to a comfortable level for you.
                   </p>
             
                   <div className="rounded-3xl border border-violet-100 bg-violet-50 p-5 text-violet-900">
-                    Test sentence: “This is an audio test for the AI answer evaluation study.”
+                    Please play the audio test and enter the spoken secret word before continuing.
                   </div>
+            
+                  <label className="block rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="mb-2 text-sm font-medium text-slate-800">
+                      Enter the secret word you heard
+                    </div>
+                    <input
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                      value={audioSecretInput}
+                      onChange={(e) => setAudioSecretInput(e.target.value)}
+                      placeholder="Secret word"
+                    />
+                  </label>
                 </div>
             
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button
                     className="rounded-2xl bg-violet-700 px-6 py-3 text-sm font-medium text-white"
-                    onClick={() =>
+                    onClick={() => {
+                      setAudioTestPlayed(true);
                       speakText(
-                        "This is an audio test for the AI answer evaluation study.",
+                        `This is an audio test for the AI answer evaluation study. The secret word is ${AUDIO_SECRET_WORD}.`,
                         true,
                         (resolvedVoice) => setVoiceInfo(resolvedVoice)
-                      )
-                    }
+                      );
+                    }}
                   >
                     Play audio test
                   </button>
             
                   <button
-                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
                     onClick={() => setScreen("instructions")}
+                    disabled={
+                      !audioTestPlayed ||
+                      audioSecretInput.trim().toLowerCase() !== AUDIO_SECRET_WORD
+                    }
                   >
-                    I can hear the audio
+                    Continue
                   </button>
                 </div>
-            
-                {voiceInfo.name ? (
-                  <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-                    Voice detected: {voiceInfo.name} ({voiceInfo.lang})
-                  </div>
-                ) : null}
               </Panel>
             )}
             {screen === "instructions" && (
@@ -2032,9 +2072,6 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 {currentTrial?.modality === 1 && (
                   <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
                     Audio playback is active in this session.
-                    {voiceInfo.name ? (
-                      <span className="ml-2 text-violet-700">Voice: {voiceInfo.name}</span>
-                    ) : null}
                   </div>
                 )}
               </Panel>
@@ -2090,7 +2127,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 }
               >
                 <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                  Supporting snippets and source references were retrieved for this answer.
+                  Supporting snippets and source references are shown for this answer.
                 </div>
 
                 <div className="grid gap-4">
@@ -2293,7 +2330,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button   
                     className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"   
-                    onClick={() => setScreen("debrief")}   
+                    onClick={() => setScreen("complete")}   
                     disabled={     
                       !interview.strategy.trim() ||     
                       !interview.hedges.trim() ||     
@@ -2306,55 +2343,23 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 </div>
               </Panel>
             )}
-            {screen === "debrief" && (
-              <Panel
-                title="Debriefing"
-                subtitle="Please read this explanation before saving your session."
-              >
-                <div className="space-y-4 text-sm leading-7 text-slate-700">
-                  <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 font-semibold text-amber-900">
-                    Please continue to the next page to save your study data.
-                  </p>
+          
+
+            {screen === "complete" && (
+              <Panel title="End of session" subtitle="Please read the debriefing and save your study data.">
+                <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
                   <p>
                     Thank you for participating in this study.
                   </p>
-            
                   <p>
-                    During the task, some AI-generated answers were intentionally incorrect. This was necessary to study
-                    how people calibrate trust in AI systems and whether they choose to accept, reject, or verify AI-generated
-                    answers.
+                    During the task, some AI-generated answers were intentionally incorrect. This was necessary to study how people evaluate, verify, accept, or reject AI-generated answers.
                   </p>
-            
                   <p>
-                    The study compares different answer styles, including answers with and without verbal uncertainty cues,
-                    and different output formats, including text and synthetic speech.
+                    The study compares different answer styles and presentation formats. The purpose is not to test your knowledge, but to understand how interface design may influence reliance and verification behaviour.
                   </p>
-            
-                  <p>
-                    The purpose of the study is not to test your knowledge, but to understand how interface design may influence
-                    reliance and verification behaviour when AI output may be uncertain or incorrect.
-                  </p>
-            
                   <p>
                     Your data will remain anonymous and will be used only for academic research purposes.
                   </p>
-                </div>
-            
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <button
-                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white"
-                    onClick={() => setScreen("complete")}
-                  >
-                    Continue to save
-                  </button>
-                </div>
-              </Panel>
-            )}
-
-            {screen === "complete" && (
-              <Panel title="End of session" subtitle="Press the button below to save all experiment data and session metadata.">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
-                  All collected information will be saved, including trial logs, manipulation checks, trust, workload, user-experience responses, final reflection responses, and session status.
                 </div>
                 {!WEBHOOK_URL && (
                   <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -2363,7 +2368,17 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 )}
                 {saveStatus && <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{saveStatus}</div>}
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => persistIntegratedResults(sessionStatus)} disabled={!!saveStatus} > {saveStatus ? "Saved" : "Save all data"} </button>
+                  <button   
+                    className="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"   
+                    onClick={() => persistIntegratedResults(sessionStatus)}   
+                    disabled={!!saveStatus || isSaving} 
+                    >   
+                    {isSaving && (     
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />   
+                    )}   
+                    {isSaving ? "Saving..." : 
+                      saveStatus ? "Saved" : "Save all data"} 
+                  </button>
                   <button className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700" onClick={() => setScreen("landing")}>Back to start</button>
                 </div>
               </Panel>
@@ -2387,11 +2402,14 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             
                 <div className="mt-8 flex flex-wrap gap-3">
                   <button
-                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
+                    className="inline-flex items-center gap-3 rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
                     onClick={() => persistIntegratedResults("ended_early")}
-                    disabled={!!saveStatus}
+                    disabled={!!saveStatus || isSaving}
                   >
-                    {saveStatus ? "Saved" : "Save partial data"}
+                    {isSaving && (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                    )}
+                    {isSaving ? "Saving..." : saveStatus ? "Saved" : "Save partial data"}
                   </button>
             
                   <button
@@ -2405,7 +2423,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             )}
 
             <footer className="border-t border-white/10 pt-6 text-center text-xs text-slate-400">
-              <div>AI Hedging Experiment · University Research Prototype</div>
+              <div>AI Answer Evaluation Task · University Research Prototype</div>
               <div className="mt-1">
                 All interactions are recorded for research purposes. No personal data is stored beyond session identifiers.
               </div>
