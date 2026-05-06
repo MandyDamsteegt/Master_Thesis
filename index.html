@@ -2279,22 +2279,22 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               <div className="space-y-6">
                 <LikertBlock title="Workload" items={NASA_TLX_ITEMS} values={workloadResponses} onChange={(key, value) => updateLikertSet(setWorkloadResponses, key, value)} type="nasa" />
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("ueq_scale")} disabled={!allLikertAnswered(workloadResponses)}>Continue</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("ux_scale")} disabled={!allLikertAnswered(workloadResponses)}>Continue</button>
                 </div>
               </div>
             )}
 
-            {screen === "ueq_scale" && (
+            {screen === "ux_scale" && (
               <div className="space-y-6">
                 <Panel title="System experience" 
                   subtitle="Please indicate how you experienced the system during the task.">   
                   <div className="grid gap-4">     
-                    {randomizedUeqItems.map((item) => (       
+                    {randomizedUxItems.map((item) => (       
                     <Likert         
                       key={item.id}         
                       label={`${item.left} — ${item.right}`}         
-                      value={ueqResponses[item.id]}         
-                      onChange={(value) => updateLikertSet(setUeqResponses, item.id, value)}         
+                      value={uxResponses[item.id]}         
+                      onChange={(value) => updateLikertSet(setUxResponses, item.id, value)}         
                       leftLabel={item.left}         
                       rightLabel={item.right}       
                       />     
@@ -2302,7 +2302,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   </div> 
                 </Panel>
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => {   setInterviewConsent("accepted");   setScreen("interview_questions"); }} disabled={!allLikertAnswered(ueqResponses)}>Continue</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => {   setInterviewConsent("accepted");   setScreen("interview_questions"); }} disabled={!allLikertAnswered(uxResponses)}>Continue</button>
                 </div>
               </div>
             )}
