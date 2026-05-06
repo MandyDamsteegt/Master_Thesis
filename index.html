@@ -217,9 +217,9 @@
         type: "categorical",
         question: "A geography question asks: Which sovereign state designates Amsterdam as its constitutional capital while government functions are elsewhere?",
         correct_answer: "The Netherlands designates Amsterdam as its constitutional capital, even though many government functions occur in The Hague.",
-        incorrect_answer: "LpostTaskembourg designates Amsterdam as its constitutional capital while government functions are elsewhere.",
+        incorrect_answer: "Luxembourg designates Amsterdam as its constitutional capital while government functions are elsewhere.",
         snippet_1: "Dutch constitutional material identifies Amsterdam as the capital.",
-        snippet_2: "Amsterdam is not the capital of LpostTaskembourg.",
+        snippet_2: "Amsterdam is not the capital of Luxembourg.",
         sources: [
           {
             title: "The Constitution of the Kingdom of the Netherlands 2018",
@@ -813,23 +813,20 @@
       return scored.length ? mean(scored) : 0;
     }
 
-    function postTaskItemToScaleValue(item, raw) {
-      const centered = Number(raw) - 4;
-      return item.positiveRight ? centered : -centered;
-    }
-
-    function scorepostTask(responses) {
-      const grouped = {};
-      POST_TASK.forEach((item) => {
+    function scorePostTask(responses) {
+      const result = {};
+    
+      POST_TASK_ITEMS.forEach((item) => {
         const raw = responses[item.id];
         if (!raw) return;
-        if (!grouped[item.scale]) grouped[item.scale] = [];
-        grouped[item.scale].push(postTaskItemToScaleValue(item, raw));
+    
+        result[item.id] = {
+          construct: item.construct,
+          rq: item.rq,
+          score: Number(raw),
+        };
       });
-      const result = {};
-      Object.keys(grouped).forEach((scale) => {
-        result[scale] = mean(grouped[scale]);
-      });
+    
       return result;
     }
 
@@ -1266,7 +1263,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         }
       }, []);
       
-      const randomizedpostTaskItems = useMemo(() => shuffle(POST_TASK), []);
+      const randomizedPostTaskItems = useMemo(() => shuffle(POST_TASK_ITEMS), []);
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -1295,7 +1292,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [manipulationCertainty, setManipulationCertainty] = useState("");
       const [trustResponses, setTrustResponses] = useState(emptyLikertSet(TRUST_ITEMS));
       const [workloadResponses, setWorkloadResponses] = useState(emptyLikertSet(NASA_TLX_ITEMS));
-      const [postTaskResponses, setpostTaskResponses] = useState(emptyLikertSet(POST_TASK));
+      const [postTaskResponses, setPostTaskResponses] = useState(emptyLikertSet(POST_TASK_ITEMS));
       const [interviewConsent, setInterviewConsent] = useState("declined");
       const [interview, setInterview] = useState({
         strategy: "",
@@ -1523,7 +1520,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setManipulationCertainty("");
         setTrustResponses(emptyLikertSet(TRUST_ITEMS));
         setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
-        setpostTaskResponses(emptyLikertSet(POST_TASK));
+        setPostTaskResponses(emptyLikertSet(POST_TASK_ITEMS));
         setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
@@ -1636,8 +1633,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             trust_score_mean: scoreTrust(trustResponses),
             workload_responses: workloadResponses,
             nasa_tlx_raw_mean: scoreRawNasaTlx(workloadResponses),
-            postTask_responses: postTaskResponses,
-            postTask_scale_scores: scorepostTask(postTaskResponses),
+            post_task_responses: postTaskResponses,
+            post_task_item_scores: scorePostTask(postTaskResponses),
             interview_consent: interviewConsent,
             researcher_notes: "",
             n_trials_completed: logs.length,
@@ -2335,23 +2332,37 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
 
             {screen === "postTask_scale" && (
               <div className="space-y-6">
-                <Panel title="System experience" 
-                  subtitle="Please indicate how you experienced the system during the task.">   
-                  <div className="grid gap-4">     
-                    {randomizedpostTaskItems.map((item) => (       
-                    <Likert         
-                      key={item.id}         
-                      label={`${item.left} — ${item.right}`}         
-                      value={postTaskResponses[item.id]}         
-                      onChange={(value) => updateLikertSet(setpostTaskResponses, item.id, value)}         
-                      leftLabel={item.left}         
-                      rightLabel={item.right}       
-                      />     
-                  ))}   
-                  </div> 
+                <Panel
+                  title="Post-task questions"
+                  subtitle="Please indicate how you experienced the assistant and your decisions during the task."
+                >
+                  <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    1 = strongly disagree · 7 = strongly agree
+                  </div>
+            
+                  <div className="grid gap-4">
+                    {randomizedPostTaskItems.map((item) => (
+                      <Likert
+                        key={item.id}
+                        label={item.text}
+                        value={postTaskResponses[item.id]}
+                        onChange={(value) => updateLikertSet(setPostTaskResponses, item.id, value)}
+                      />
+                    ))}
+                  </div>
                 </Panel>
+            
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => {   setInterviewConsent("accepted");   setScreen("interview_questions"); }} disabled={!allLikertAnswered(postTaskResponses)}>Continue</button>
+                  <button
+                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
+                    onClick={() => {
+                      setInterviewConsent("accepted");
+                      setScreen("interview_questions");
+                    }}
+                    disabled={!allLikertAnswered(postTaskResponses)}
+                  >
+                    Continue
+                  </button>
                 </div>
               </div>
             )}
