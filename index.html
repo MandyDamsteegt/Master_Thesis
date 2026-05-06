@@ -108,12 +108,57 @@
       },
     ];
     
-      const UX_ITEMS = [
-        { id: "X1", scale: "Exploratory usability", left: "confusing", right: "clear", positiveRight: true },
-        { id: "X2", scale: "Exploratory usability", left: "inefficient", right: "efficient", positiveRight: true },
-        { id: "X3", scale: "Exploratory usability", left: "not understandable", right: "understandable", positiveRight: true },
-        { id: "X4", scale: "Exploratory usability", left: "unpredictable", right: "predictable", positiveRight: true },
-      ];
+    const POST_TASK_ITEMS = [
+      {
+        id: "PT1",
+        construct: "Perceived uncertainty",
+        rq: "SRQ2",
+        text: "The assistant's wording made uncertainty noticeable.",
+        reverse: false,
+      },
+      {
+        id: "PT2",
+        construct: "Perceived certainty",
+        rq: "SRQ2",
+        text: "The assistant sounded certain in its answers.",
+        reverse: false,
+      },
+      {
+        id: "PT3",
+        construct: "Perceived reliability",
+        rq: "SRQ2",
+        text: "The assistant's answers seemed reliable.",
+        reverse: false,
+      },
+      {
+        id: "PT4",
+        construct: "Verification usefulness",
+        rq: "SRQ1",
+        text: "The supporting information helped me decide whether to accept or reject answers.",
+        reverse: false,
+      },
+      {
+        id: "PT5",
+        construct: "Decision confidence",
+        rq: "SRQ1",
+        text: "I felt confident in my final decisions.",
+        reverse: false,
+      },
+      {
+        id: "PT6",
+        construct: "Modality influence",
+        rq: "SRQ3",
+        text: "The way the answer was presented influenced how I judged it.",
+        reverse: false,
+      },
+      {
+        id: "PT7",
+        construct: "Behavioural adaptation",
+        rq: "SRQ4",
+        text: "My way of judging the answers changed during the task.",
+        reverse: false,
+      },
+    ];
 
     const ITEM_BANK = [
       {
@@ -172,9 +217,9 @@
         type: "categorical",
         question: "A geography question asks: Which sovereign state designates Amsterdam as its constitutional capital while government functions are elsewhere?",
         correct_answer: "The Netherlands designates Amsterdam as its constitutional capital, even though many government functions occur in The Hague.",
-        incorrect_answer: "Luxembourg designates Amsterdam as its constitutional capital while government functions are elsewhere.",
+        incorrect_answer: "LpostTaskembourg designates Amsterdam as its constitutional capital while government functions are elsewhere.",
         snippet_1: "Dutch constitutional material identifies Amsterdam as the capital.",
-        snippet_2: "Amsterdam is not the capital of Luxembourg.",
+        snippet_2: "Amsterdam is not the capital of LpostTaskembourg.",
         sources: [
           {
             title: "The Constitution of the Kingdom of the Netherlands 2018",
@@ -768,18 +813,18 @@
       return scored.length ? mean(scored) : 0;
     }
 
-    function uxItemToScaleValue(item, raw) {
+    function postTaskItemToScaleValue(item, raw) {
       const centered = Number(raw) - 4;
       return item.positiveRight ? centered : -centered;
     }
 
-    function scoreUx(responses) {
+    function scorepostTask(responses) {
       const grouped = {};
-      UX_ITEMS.forEach((item) => {
+      POST_TASK.forEach((item) => {
         const raw = responses[item.id];
         if (!raw) return;
         if (!grouped[item.scale]) grouped[item.scale] = [];
-        grouped[item.scale].push(uxItemToScaleValue(item, raw));
+        grouped[item.scale].push(postTaskItemToScaleValue(item, raw));
       });
       const result = {};
       Object.keys(grouped).forEach((scale) => {
@@ -1163,7 +1208,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           <div className="grid gap-4">
             {items.map((item, index) => {
               const key = item.id || `item_${index + 1}`;
-              if (type === "ux") {
+              if (type === "postTask") {
                 return (
                   <Likert
                     key={key}
@@ -1221,7 +1266,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         }
       }, []);
       
-      const randomizedUxItems = useMemo(() => shuffle(UX_ITEMS), []);
+      const randomizedpostTaskItems = useMemo(() => shuffle(POST_TASK), []);
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -1250,7 +1295,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [manipulationCertainty, setManipulationCertainty] = useState("");
       const [trustResponses, setTrustResponses] = useState(emptyLikertSet(TRUST_ITEMS));
       const [workloadResponses, setWorkloadResponses] = useState(emptyLikertSet(NASA_TLX_ITEMS));
-      const [uxResponses, setUxResponses] = useState(emptyLikertSet(UX_ITEMS));
+      const [postTaskResponses, setpostTaskResponses] = useState(emptyLikertSet(POST_TASK));
       const [interviewConsent, setInterviewConsent] = useState("declined");
       const [interview, setInterview] = useState({
         strategy: "",
@@ -1478,7 +1523,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setManipulationCertainty("");
         setTrustResponses(emptyLikertSet(TRUST_ITEMS));
         setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
-        setUxResponses(emptyLikertSet(UX_ITEMS));
+        setpostTaskResponses(emptyLikertSet(POST_TASK));
         setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
@@ -1591,8 +1636,8 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             trust_score_mean: scoreTrust(trustResponses),
             workload_responses: workloadResponses,
             nasa_tlx_raw_mean: scoreRawNasaTlx(workloadResponses),
-            ux_responses: uxResponses,
-            ux_scale_scores: scoreUx(uxResponses),
+            postTask_responses: postTaskResponses,
+            postTask_scale_scores: scorepostTask(postTaskResponses),
             interview_consent: interviewConsent,
             researcher_notes: "",
             n_trials_completed: logs.length,
@@ -1808,7 +1853,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               </Panel>
             )}
 
-            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "early_exit", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "ux_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
+            {!["landing", "consent", "no_consent_thankyou", "audio_test", "instructions", "early_exit", "practice_complete", "manipulation_checks", "trust_scale", "workload_scale", "postTask_scale", "interview_invite", "interview_questions", "debrief", "complete"].includes(screen) && currentTrial && (
               <div className="rounded-[2rem] border border-white/10 bg-white/10 p-5 text-white shadow-xl backdrop-blur">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 text-sm text-blue-50/90">
                   <div><span className="font-semibold text-white">Participant:</span> {participantId}</div>
@@ -2283,22 +2328,22 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
               <div className="space-y-6">
                 <LikertBlock title="Workload" items={NASA_TLX_ITEMS} values={workloadResponses} onChange={(key, value) => updateLikertSet(setWorkloadResponses, key, value)} type="nasa" />
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("ux_scale")} disabled={!allLikertAnswered(workloadResponses)}>Continue</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => setScreen("postTask_scale")} disabled={!allLikertAnswered(workloadResponses)}>Continue</button>
                 </div>
               </div>
             )}
 
-            {screen === "ux_scale" && (
+            {screen === "postTask_scale" && (
               <div className="space-y-6">
                 <Panel title="System experience" 
                   subtitle="Please indicate how you experienced the system during the task.">   
                   <div className="grid gap-4">     
-                    {randomizedUxItems.map((item) => (       
+                    {randomizedpostTaskItems.map((item) => (       
                     <Likert         
                       key={item.id}         
                       label={`${item.left} — ${item.right}`}         
-                      value={uxResponses[item.id]}         
-                      onChange={(value) => updateLikertSet(setUxResponses, item.id, value)}         
+                      value={postTaskResponses[item.id]}         
+                      onChange={(value) => updateLikertSet(setpostTaskResponses, item.id, value)}         
                       leftLabel={item.left}         
                       rightLabel={item.right}       
                       />     
@@ -2306,7 +2351,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   </div> 
                 </Panel>
                 <div className="flex flex-wrap gap-3">
-                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => {   setInterviewConsent("accepted");   setScreen("interview_questions"); }} disabled={!allLikertAnswered(uxResponses)}>Continue</button>
+                  <button className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => {   setInterviewConsent("accepted");   setScreen("interview_questions"); }} disabled={!allLikertAnswered(postTaskResponses)}>Continue</button>
                 </div>
               </div>
             )}
