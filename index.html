@@ -108,14 +108,14 @@
       },
     ];
     
-        const UEQ_ITEMS = [
-          // Pragmatic quality (usefulness, clarity, efficiency)
+        const UX_ITEMS = [
+          // Adapted short user experience measure: pragmatic quality
           { id: "U1", scale: "Pragmatic", left: "confusing", right: "clear", positiveRight: true },
           { id: "U2", scale: "Pragmatic", left: "inefficient", right: "efficient", positiveRight: true },
           { id: "U3", scale: "Pragmatic", left: "not understandable", right: "understandable", positiveRight: true },
           { id: "U4", scale: "Pragmatic", left: "unpredictable", right: "predictable", positiveRight: true },
         
-          // Hedonic quality (experience / affect)
+          // Adapted short user experience measure: hedonic quality
           { id: "U5", scale: "Hedonic", left: "boring", right: "exciting", positiveRight: true },
           { id: "U6", scale: "Hedonic", left: "dull", right: "creative", positiveRight: true },
           { id: "U7", scale: "Hedonic", left: "unpleasant", right: "pleasant", positiveRight: true },
@@ -775,18 +775,18 @@
       return scored.length ? mean(scored) : 0;
     }
 
-    function ueqItemToScaleValue(item, raw) {
+    function uxItemToScaleValue(item, raw) {
       const centered = Number(raw) - 4;
       return item.positiveRight ? centered : -centered;
     }
 
-    function scoreUeq(responses) {
+    function scoreUx(responses) {
       const grouped = {};
-      UEQ_ITEMS.forEach((item) => {
+      UX_ITEMS.forEach((item) => {
         const raw = responses[item.id];
         if (!raw) return;
         if (!grouped[item.scale]) grouped[item.scale] = [];
-        grouped[item.scale].push(ueqItemToScaleValue(item, raw));
+        grouped[item.scale].push(uxItemToScaleValue(item, raw));
       });
       const result = {};
       Object.keys(grouped).forEach((scale) => {
@@ -1159,7 +1159,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           <div className="grid gap-4">
             {items.map((item, index) => {
               const key = item.id || `item_${index + 1}`;
-              if (type === "ueq") {
+              if (type === "ux") {
                 return (
                   <Likert
                     key={key}
@@ -1217,7 +1217,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         }
       }, []);
       
-      const randomizedUeqItems = useMemo(() => shuffle(UEQ_ITEMS), []);
+      const randomizedUeqItems = useMemo(() => shuffle(UX_ITEMS), []);
       const [sessions, setSessions] = useState([]);
       const [message, setMessage] = useState("");
 
@@ -1246,7 +1246,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [manipulationCertainty, setManipulationCertainty] = useState("");
       const [trustResponses, setTrustResponses] = useState(emptyLikertSet(TRUST_ITEMS));
       const [workloadResponses, setWorkloadResponses] = useState(emptyLikertSet(NASA_TLX_ITEMS));
-      const [ueqResponses, setUeqResponses] = useState(emptyLikertSet(UEQ_ITEMS));
+      const [ueqResponses, setUeqResponses] = useState(emptyLikertSet(UX_ITEMS));
       const [interviewConsent, setInterviewConsent] = useState("declined");
       const [interview, setInterview] = useState({
         strategy: "",
@@ -1474,7 +1474,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setManipulationCertainty("");
         setTrustResponses(emptyLikertSet(TRUST_ITEMS));
         setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
-        setUeqResponses(emptyLikertSet(UEQ_ITEMS));
+        setUeqResponses(emptyLikertSet(UX_ITEMS));
         setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
         setSaveStatus("");
