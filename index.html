@@ -1205,18 +1205,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
           <div className="grid gap-4">
             {items.map((item, index) => {
               const key = item.id || `item_${index + 1}`;
-              if (type === "postTask") {
-                return (
-                  <Likert
-                    key={key}
-                    label={`${item.left} — ${item.right}`}
-                    value={values[key]}
-                    onChange={(value) => onChange(key, value)}
-                    leftLabel={item.left}
-                    rightLabel={item.right}
-                  />
-                );
-              }
+    
               if (type === "nasa") {
                 return (
                   <Likert
@@ -1229,6 +1218,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   />
                 );
               }
+    
               return (
                 <Likert
                   key={key}
