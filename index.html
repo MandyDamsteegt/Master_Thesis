@@ -1325,7 +1325,14 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
     }
 
     function App() {
-      const adminEnabledByQuery = true;
+      const adminEnabledByQuery = useMemo(() => {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          return params.get("admin") === "true";
+        } catch {
+          return false;
+        }
+      }, []);
       const forcedConditionByQuery = useMemo(() => {
         try {
           const params = new URLSearchParams(window.location.search);
