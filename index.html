@@ -1325,7 +1325,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
     }
 
     function App() {
-      const adminEnabledByQuery = false;
+      const adminEnabledByQuery = true;
       const forcedConditionByQuery = useMemo(() => {
         try {
           const params = new URLSearchParams(window.location.search);
