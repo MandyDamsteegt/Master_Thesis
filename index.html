@@ -115,26 +115,26 @@
       { id: "U04", scale: "Perspicuity", left: "easy to learn", right: "difficult to learn", positiveSide: "left" },
       { id: "U05", scale: "Stimulation", left: "valuable", right: "inferior", positiveSide: "left" },
       { id: "U06", scale: "Stimulation", left: "boring", right: "exciting", positiveSide: "right" },
-      { id: "U07", scale: "Novelty", left: "not interesting", right: "interesting", positiveSide: "right" },
+      { id: "U07", scale: "Stimulation", left: "not interesting", right: "interesting", positiveSide: "right" },
       { id: "U08", scale: "Dependability", left: "unpredictable", right: "predictable", positiveSide: "right" },
       { id: "U09", scale: "Efficiency", left: "fast", right: "slow", positiveSide: "left" },
       { id: "U10", scale: "Novelty", left: "inventive", right: "conventional", positiveSide: "left" },
-      { id: "U11", scale: "Perspicuity", left: "obstructive", right: "supportive", positiveSide: "right" },
+      { id: "U11", scale: "Dependability", left: "obstructive", right: "supportive", positiveSide: "right" },
       { id: "U12", scale: "Attractiveness", left: "good", right: "bad", positiveSide: "left" },
       { id: "U13", scale: "Perspicuity", left: "complicated", right: "easy", positiveSide: "right" },
       { id: "U14", scale: "Attractiveness", left: "unlikable", right: "pleasing", positiveSide: "right" },
       { id: "U15", scale: "Novelty", left: "usual", right: "leading edge", positiveSide: "right" },
       { id: "U16", scale: "Attractiveness", left: "unpleasant", right: "pleasant", positiveSide: "right" },
-      { id: "U17", scale: "Efficiency", left: "secure", right: "not secure", positiveSide: "left" },
+      { id: "U17", scale: "Dependability", left: "secure", right: "not secure", positiveSide: "left" },
       { id: "U18", scale: "Stimulation", left: "motivating", right: "demotivating", positiveSide: "left" },
-      { id: "U19", scale: "Attractiveness", left: "meets expectations", right: "does not meet expectations", positiveSide: "left" },
+      { id: "U19", scale: "Dependability", left: "meets expectations", right: "does not meet expectations", positiveSide: "left" },
       { id: "U20", scale: "Efficiency", left: "inefficient", right: "efficient", positiveSide: "right" },
-      { id: "U21", scale: "Efficiency", left: "clear", right: "confusing", positiveSide: "left" },
-      { id: "U22", scale: "Dependability", left: "impractical", right: "practical", positiveSide: "right" },
-      { id: "U23", scale: "Dependability", left: "organized", right: "cluttered", positiveSide: "left" },
+      { id: "U21", scale: "Perspicuity", left: "clear", right: "confusing", positiveSide: "left" },
+      { id: "U22", scale: "Efficiency", left: "impractical", right: "practical", positiveSide: "right" },
+      { id: "U23", scale: "Efficiency", left: "organized", right: "cluttered", positiveSide: "left" },
       { id: "U24", scale: "Attractiveness", left: "attractive", right: "unattractive", positiveSide: "left" },
       { id: "U25", scale: "Attractiveness", left: "friendly", right: "unfriendly", positiveSide: "left" },
-      { id: "U26", scale: "Dependability", left: "conservative", right: "innovative", positiveSide: "right" },
+      { id: "U26", scale: "Novelty", left: "conservative", right: "innovative", positiveSide: "right" },
     ];
     
     const POST_TASK_ITEMS = [
@@ -818,7 +818,14 @@
     function allLikertAnswered(obj) {
       return Object.values(obj).every(Boolean);
     }
-
+    
+    function areItemsAnswered(responses, items) {
+      return items.every((item) => Boolean(responses[item.id]));
+    }
+    
+    function getUeqPageItems(page) {
+      return page === 1 ? UEQ_ITEMS.slice(0, 13) : UEQ_ITEMS.slice(13, 26);
+    }
     function reverse7(value) {
       return 8 - Number(value);
     }
@@ -1373,6 +1380,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
       const [trustResponses, setTrustResponses] = useState(emptyLikertSet(TRUST_ITEMS));
       const [workloadResponses, setWorkloadResponses] = useState(emptyLikertSet(NASA_TLX_ITEMS));
       const [ueqResponses, setUeqResponses] = useState(emptyLikertSet(UEQ_ITEMS));
+      const [ueqPage, setUeqPage] = useState(1);
       const [postTaskResponses, setPostTaskResponses] = useState(emptyLikertSet(POST_TASK_ITEMS));
       const [interviewConsent, setInterviewConsent] = useState("declined");
       const [interview, setInterview] = useState({
@@ -1588,6 +1596,7 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
         setTrustResponses(emptyLikertSet(TRUST_ITEMS));
         setWorkloadResponses(emptyLikertSet(NASA_TLX_ITEMS));
         setUeqResponses(emptyLikertSet(UEQ_ITEMS));
+        setUeqPage(1);
         setPostTaskResponses(emptyLikertSet(POST_TASK_ITEMS));
         setInterviewConsent("accepted");
         setInterview({ strategy: "", hedges: "", modality: "", block_changes: "" });
@@ -1704,6 +1713,14 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             nasa_tlx_raw_mean: scoreRawNasaTlx(workloadResponses),
             ueq_responses: ueqResponses,
             ueq_scores: scoreUeq(ueqResponses),
+            ueq_presentation: {
+              questionnaire: "full_26_item_UEQ",
+              pages: 2,
+              items_per_page: [13, 13],
+              item_order_preserved: true,
+              polarity_preserved: true,
+              additional_randomisation_applied: false,
+            },
             post_task_responses: postTaskResponses,
             post_task_item_scores: scorePostTask(postTaskResponses),
             interview_consent: interviewConsent,
@@ -2403,15 +2420,19 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
             {screen === "ueq_scale" && (
               <div className="space-y-6">
                 <Panel
-                  title="User experience"
+                  title={`User experience ${ueqPage}/2`}
                   subtitle="Please rate your experience with the system. Choose one number between each pair of words."
                 >
                   <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                     1 = closer to the word on the left · 7 = closer to the word on the right
                   </div>
             
+                  <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                    Please answer all items on this page before continuing.
+                  </div>
+            
                   <div className="grid gap-4">
-                    {UEQ_ITEMS.map((item) => (
+                    {getUeqPageItems(ueqPage).map((item) => (
                       <Likert
                         key={item.id}
                         label={`${item.left}  —  ${item.right}`}
@@ -2426,16 +2447,38 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                 </Panel>
             
                 <div className="flex flex-wrap gap-3">
-                  <button
-                    className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
-                    onClick={() => setScreen("postTask_scale")}
-                    disabled={!allLikertAnswered(ueqResponses)}
-                  >
-                    Continue
-                  </button>
+                  {ueqPage === 2 && (
+                    <button
+                      className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700"
+                      onClick={() => setUeqPage(1)}
+                    >
+                      Back
+                    </button>
+                  )}
+            
+                  {ueqPage === 1 && (
+                    <button
+                      className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
+                      onClick={() => setUeqPage(2)}
+                      disabled={!areItemsAnswered(ueqResponses, getUeqPageItems(1))}
+                    >
+                      Continue to page 2
+                    </button>
+                  )}
+            
+                  {ueqPage === 2 && (
+                    <button
+                      className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-medium text-white disabled:opacity-50"
+                      onClick={() => setScreen("postTask_scale")}
+                      disabled={!allLikertAnswered(ueqResponses)}
+                    >
+                      Continue
+                    </button>
+                  )}
                 </div>
               </div>
             )}
+            
             {screen === "postTask_scale" && (
               <div className="space-y-6">
                 <Panel
