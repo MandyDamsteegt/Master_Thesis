@@ -18,6 +18,8 @@
     const STORAGE_PREFIX = "ai_hedging_participant_session_";
     const ADMIN_CODE = "0000";
     const WEBHOOK_URL = "https://ai-hedging-backend.onrender.com/api/experiment";
+    const SURVEYSWAP_CODE = "57W4-TFON-LZMP";
+    const SURVEYSWAP_URL = "https://surveyswap.io/sr/57W4-TFON-LZMP";
 
     const CONDITION_ORDER = ["C1", "C2", "C3", "C4"];
     const ASSIGNMENT_COUNTER_KEY = "ai_hedging_assignment_counter_v1";
@@ -1933,6 +1935,9 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   <p>
                     Your session will be assigned automatically. You do not need to enter a participant ID.
                   </p>
+                  <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                    P.S. This survey includes a SurveySwap Karma code that will be shown after completing the study.
+                  </div>
                 </div>
               </Panel>
             )}
@@ -2575,6 +2580,32 @@ function formatDisplayedAnswer(baseAnswer, condition, item) {
                   </p>
                   <p>
                     Your data will remain anonymous and will be used only for academic research purposes.
+                  </p>
+                </div>
+                
+                <div className="mt-4 rounded-3xl border border-blue-200 bg-blue-50 p-5 text-sm leading-7 text-blue-900">
+                  <div className="font-semibold text-blue-950">
+                    SurveySwap Karma
+                  </div>
+                  <p className="mt-2">
+                    The following code gives you Karma that can be used to get free research participants at SurveySwap.io.
+                  </p>
+                  <p className="mt-2">
+                    Go to:{" "}
+                    <a
+                      href={SURVEYSWAP_URL}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="font-medium underline"
+                    >
+                      {SURVEYSWAP_URL}
+                    </a>
+                  </p>
+                  <p className="mt-2">
+                    Or enter the code manually:{" "}
+                    <span className="rounded-xl bg-white px-3 py-1 font-mono font-semibold text-blue-950">
+                      {SURVEYSWAP_CODE}
+                    </span>
                   </p>
                 </div>
             
