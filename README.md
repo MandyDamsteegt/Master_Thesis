@@ -769,14 +769,6 @@ prototype/executable/index.html
 
 ## Data quality and exclusions
 
-See:
-
-```text
-misc/exclusion_or_data_quality_notes.txt
-```
-
-Suggested content if no participants were excluded:
-
 ```text
 No participants were excluded from the final dataset. The final sample consisted of 72 participants, with 18 participants per condition. Each participant completed 30 main trials, resulting in 2160 trial-level observations.
 
@@ -788,12 +780,6 @@ The final analysis reported in the thesis was conducted using `Data Analyse Defi
 ## Participant notes
 
 See:
-
-```text
-misc/participant_notes.csv
-```
-
-Suggested content if no notable participant-level issues were recorded:
 
 ```csv
 participant_id,notes
@@ -859,5 +845,3 @@ backend/server exports
 → data/scripts/Data Analyse Defi.ipynb
 → analysis_outputs/figures/
 ```
-
-Only `Data Analyse Defi.ipynb` and the figures listed in this README should be treated as the final analysis used for the thesis.
