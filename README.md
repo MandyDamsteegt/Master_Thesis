@@ -6,10 +6,14 @@ The experiment is part of the thesis project:
 
 **Designing Uncertainty-Aware AI Interfaces: Verbal Hedging and Trust Calibration in Text and Synthetic Speech**
 
+The live experiment prototype can be accessed through GitHub Pages:
+
+**Experiment link:** [https://mandydamsteegt.github.io/Master_Thesis/](https://mandydamsteegt.github.io/Master_Thesis/)
+
 The prototype is implemented as a single-page browser application in:
 
 ```text
-https://mandydamsteegt.github.io/Master_Thesis/
+prototype/executable/index.html
 ```
 
 The final data analysis reported in the thesis was conducted using:
@@ -113,6 +117,25 @@ The final sample consisted of **72 participants**, with **18 participants per co
 
 ---
 
+## Experiment access
+
+The experiment prototype is available online through GitHub Pages:
+
+[https://mandydamsteegt.github.io/Master_Thesis/](https://mandydamsteegt.github.io/Master_Thesis/)
+
+The online version was used to provide browser-based access to the experiment prototype. The local executable version is also included in this repository as:
+
+```text
+prototype/executable/index.html
+```
+
+The experiment can therefore be inspected or re-run in two ways:
+
+1. Open the online GitHub Pages version.
+2. Open the local `index.html` file in a modern browser.
+
+---
+
 ## Experiment flow
 
 The participant flow is:
@@ -193,12 +216,16 @@ The six UEQ scales are:
 
 ## Running the prototype
 
-The prototype can be run directly from the `index.html` file.
+The prototype can be run online through GitHub Pages:
+
+[https://mandydamsteegt.github.io/Master_Thesis/](https://mandydamsteegt.github.io/Master_Thesis/)
+
+The prototype can also be run directly from the local `index.html` file.
 
 To run locally:
 
 1. Download or clone this repository.
-2. Open `https://mandydamsteegt.github.io/Master_Thesis/` in a modern browser.
+2. Open `prototype/executable/index.html` in a modern browser.
 3. Start the study from the landing page.
 
 Recommended browsers:
@@ -216,7 +243,11 @@ For the speech conditions, audio playback should be enabled and the device volum
 
 ## GitHub Pages
 
-This repository can be hosted with **GitHub Pages**.
+This repository is configured to host the experiment prototype through **GitHub Pages**.
+
+The live experiment page is available at:
+
+[https://mandydamsteegt.github.io/Master_Thesis/](https://mandydamsteegt.github.io/Master_Thesis/)
 
 If `index.html` is placed in the root of the repository, GitHub Pages will serve the experiment page automatically.
 
@@ -226,7 +257,7 @@ In this repository structure, the executable file is stored at:
 prototype/executable/index.html
 ```
 
-If GitHub Pages is used, the file may need to be copied to the repository root or the GitHub Pages settings should point to the correct folder, depending on the hosting setup.
+Depending on the GitHub Pages configuration, the root-level `index.html` may be used for hosting, while the version in `prototype/executable/` is retained as the documented executable prototype file for the digital submission.
 
 ---
 
@@ -248,19 +279,29 @@ The admin interface is intended only as a lightweight researcher tool for this p
 
 ---
 
-## Data storage
+## Data storage and export
 
-The prototype stores data in two ways.
+During data collection, participant data were stored through the experiment backend. The prototype attempted to send completed sessions to the backend endpoint configured in the code. As a fallback, data could also be stored locally in the browser.
 
-### Local browser storage
+At the start of the data processing workflow, the data were exported locally from the backend/server using the following routes:
 
-Data is saved to the browser’s local storage as a fallback.
+```text
+https://ai-hedging-backend.onrender.com/api/download-all
+https://ai-hedging-backend.onrender.com/api/download-participants-csv
+https://ai-hedging-backend.onrender.com/api/download-trials-csv
+https://ai-hedging-backend.onrender.com/api/download-interviews-csv
+```
 
-### Backend endpoint
+These routes were used to download the raw and structured data exports from the server. The exported files were then stored locally and used as the basis for cleaning, structuring, and analysis.
 
-If configured, data is also sent to the backend endpoint defined in the code.
+| Export route | Purpose |
+|---|---|
+| `/api/download-all` | Full raw export of all participant sessions, including metadata, questionnaires, qualitative responses, and trial-level logs |
+| `/api/download-participants-csv` | Participant-level CSV export |
+| `/api/download-trials-csv` | Trial-level long-format CSV export |
+| `/api/download-interviews-csv` | Qualitative reflection/interview response CSV export |
 
-If automatic sending fails, the prototype still saves the session locally.
+The final analysis does not require live access to the backend server. It can be reproduced from the locally stored cleaned CSV files and the final analysis notebook included in this repository.
 
 ---
 
@@ -276,7 +317,27 @@ The raw data export is stored in:
 data/rawdata/data tijdelijk.docx
 ```
 
-This file contains the original participant-level data export, including participant metadata, condition assignment, questionnaire responses, post-task responses, qualitative responses, and trial-level logs.
+This file contains the original participant-level data export obtained from the backend/server export route:
+
+```text
+https://ai-hedging-backend.onrender.com/api/download-all
+```
+
+The raw export contains all completed participant sessions and includes participant metadata, condition assignment, questionnaire responses, post-task responses, qualitative responses, and trial-level logs.
+
+The server also provided structured CSV export routes for participant-level, trial-level, and qualitative response data:
+
+```text
+https://ai-hedging-backend.onrender.com/api/download-participants-csv
+https://ai-hedging-backend.onrender.com/api/download-trials-csv
+https://ai-hedging-backend.onrender.com/api/download-interviews-csv
+```
+
+The exported files were downloaded locally from the server and then used as the basis for the cleaned datasets in:
+
+```text
+data/cleandata/
+```
 
 The raw export includes, where applicable:
 
@@ -313,7 +374,103 @@ The raw export includes, where applicable:
 
 Where applicable, information not required for reproducing the analysis was removed before long-term storage.
 
-### Cleaned data
+---
+
+## From raw data to cleaned data
+
+The cleaned data files were created from the backend/server exports. The cleaning process was performed in the final analysis workflow and documented through the final notebook:
+
+```text
+data/scripts/Data Analyse Defi.ipynb
+```
+
+The cleaning and preparation process consisted of the following steps:
+
+1. **Exporting the raw and structured data from the backend/server**
+
+   Data were downloaded locally from the backend/server using the export routes for all data, participant-level data, trial-level data, and interview/reflection data.
+
+2. **Checking the raw export**
+
+   The raw export was inspected to verify that participant sessions were complete and that the expected fields were present. This included checking participant metadata, condition assignment, trial logs, questionnaire responses, and qualitative responses.
+
+3. **Checking sample size and condition balance**
+
+   The dataset was checked for the expected final sample size of **72 participants**. Condition balance was checked to verify that the four experimental conditions each contained **18 participants**:
+
+   - **C1:** No hedge + Text
+   - **C2:** Hedge + Text
+   - **C3:** No hedge + Speech
+   - **C4:** Hedge + Speech
+
+4. **Checking trial completeness**
+
+   Each participant was expected to complete **30 main trials**. The final dataset therefore contained **2160 trial-level observations**.
+
+5. **Creating the participant-level cleaned dataset**
+
+   Participant-level metadata and questionnaire data were extracted and structured into:
+
+   ```text
+   data/cleandata/ai_hedging_clean_participants.csv
+   ```
+
+   This file contains one row per participant and includes condition assignment, hedging condition, modality condition, manipulation-check responses, trust responses, NASA-TLX workload responses, UEQ responses, post-task responses, and participant-level summary measures.
+
+6. **Creating the trial-level long-format cleaned dataset**
+
+   Trial logs were extracted and converted into long format, resulting in:
+
+   ```text
+   data/cleandata/ai_hedging_clean_trials_long.csv
+   ```
+
+   This file contains one row per participant-trial combination. It is the main dataset for the behavioural analyses. It includes item ID, block number, trial index, answer correctness, displayed answer, hedge phrase, hedge type, verification behaviour, evidence panel usage, final decision, decision time, and final accuracy.
+
+7. **Creating the cleaned qualitative response dataset**
+
+   Open-text reflection and interview-style responses were extracted and stored in:
+
+   ```text
+   data/cleandata/ai_hedging_clean_interviews.csv
+   ```
+
+   This file contains participant-level qualitative responses used to support the interpretation of the behavioural results.
+
+8. **Creating summary datasets**
+
+   Condition-level and block-level summary datasets were created for descriptive analysis and reporting:
+
+   ```text
+   data/cleandata/ai_hedging_condition_summary.csv
+   data/cleandata/ai_hedging_block_summary.csv
+   ```
+
+   The condition summary file contains descriptive statistics per experimental condition. The block summary file contains descriptive statistics across the three repeated interaction blocks.
+
+9. **Creating the data dictionary**
+
+   Variable names, labels, and coding conventions were documented in:
+
+   ```text
+   data/cleandata/ai_hedging_data_dictionary.csv
+   ```
+
+   This file explains the main variables used in the cleaned datasets and should be consulted before reproducing the analysis.
+
+10. **Generating the final figures**
+
+   The cleaned datasets were used in `Data Analyse Defi.ipynb` to generate the final figures stored in:
+
+   ```text
+   analysis_outputs/figures/
+   ```
+
+The final cleaned data files are therefore derived from the backend/server exports and are the files used for the final thesis analysis.
+
+---
+
+## Cleaned data
 
 The cleaned data files are stored in:
 
@@ -332,7 +489,7 @@ ai_hedging_block_summary.csv
 ai_hedging_data_dictionary.csv
 ```
 
-#### `ai_hedging_clean_participants.csv`
+### `ai_hedging_clean_participants.csv`
 
 Participant-level cleaned dataset. Each row represents one participant.
 
@@ -350,7 +507,7 @@ This file includes participant-level information such as:
 - post-task responses
 - participant-level summary measures
 
-#### `ai_hedging_clean_trials_long.csv`
+### `ai_hedging_clean_trials_long.csv`
 
 Trial-level long-format cleaned dataset. Each row represents one participant-trial observation.
 
@@ -378,7 +535,7 @@ This file includes trial-level variables such as:
 - final accuracy
 - question text
 
-#### `ai_hedging_clean_interviews.csv`
+### `ai_hedging_clean_interviews.csv`
 
 Cleaned qualitative reflection dataset. This file contains the open-text responses used to support the interpretation of the behavioural findings.
 
@@ -389,17 +546,17 @@ The qualitative responses cover topics such as:
 - whether modality influenced interpretation
 - whether behaviour changed across blocks
 
-#### `ai_hedging_condition_summary.csv`
+### `ai_hedging_condition_summary.csv`
 
 Condition-level summary file with descriptive statistics by experimental condition.
 
-#### `ai_hedging_block_summary.csv`
+### `ai_hedging_block_summary.csv`
 
 Block-level summary file with descriptive statistics across the three repeated interaction blocks.
 
 This file was used to inspect behavioural adaptation over time, including changes in verification rate, final accuracy, and decision time across blocks.
 
-#### `ai_hedging_data_dictionary.csv`
+### `ai_hedging_data_dictionary.csv`
 
 Data dictionary explaining the variable names, labels, and coding conventions used in the cleaned datasets.
 
@@ -560,29 +717,37 @@ To reproduce the final reported analysis:
 
 1. Open the cleaned data folder:
 
-```text
-data/cleandata/
-```
+   ```text
+   data/cleandata/
+   ```
 
 2. Review the data dictionary:
 
-```text
-data/cleandata/ai_hedging_data_dictionary.csv
-```
+   ```text
+   data/cleandata/ai_hedging_data_dictionary.csv
+   ```
 
 3. Open the final analysis notebook:
 
-```text
-data/scripts/Data Analyse Defi.ipynb
-```
+   ```text
+   data/scripts/Data Analyse Defi.ipynb
+   ```
 
 4. Run the notebook from top to bottom.
 
 5. Compare the generated outputs with the figures in:
 
+   ```text
+   analysis_outputs/figures/
+   ```
+
+The original data collection exports were obtained from the backend/server using the download routes listed in the **Data storage and export** section. For the final thesis analysis, the relevant exported data were stored locally and processed into the cleaned CSV files in:
+
 ```text
-analysis_outputs/figures/
+data/cleandata/
 ```
+
+The final analysis does not require live access to the backend server.
 
 To inspect the original raw export:
 
@@ -590,7 +755,11 @@ To inspect the original raw export:
 data/rawdata/data tijdelijk.docx
 ```
 
-To re-run or inspect the prototype:
+To re-run or inspect the prototype, use the GitHub Pages link:
+
+[https://mandydamsteegt.github.io/Master_Thesis/](https://mandydamsteegt.github.io/Master_Thesis/)
+
+or open the local file:
 
 ```text
 prototype/executable/index.html
@@ -684,7 +853,9 @@ Data is stored with anonymous participant/session identifiers and is intended to
 The definitive analysis route for this thesis submission is:
 
 ```text
-data/cleandata/
+backend/server exports
+→ local raw and structured exports
+→ data/cleandata/
 → data/scripts/Data Analyse Defi.ipynb
 → analysis_outputs/figures/
 ```
