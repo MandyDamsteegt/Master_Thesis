@@ -9,7 +9,7 @@ The experiment is part of the thesis project:
 The prototype is implemented as a single-page browser application in:
 
 ```text
-prototype/executable/index.html
+https://mandydamsteegt.github.io/Master_Thesis/
 ```
 
 The final data analysis reported in the thesis was conducted using:
@@ -198,7 +198,7 @@ The prototype can be run directly from the `index.html` file.
 To run locally:
 
 1. Download or clone this repository.
-2. Open `prototype/executable/index.html` in a modern browser.
+2. Open `https://mandydamsteegt.github.io/Master_Thesis/` in a modern browser.
 3. Start the study from the landing page.
 
 Recommended browsers:
