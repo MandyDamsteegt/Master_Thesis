@@ -81,7 +81,7 @@ The final sample consisted of **72 participants**, with **18 participants per co
 │   ├── rawdata/
 │   │   └── data tijdelijk.docx
 │   │
-│   ├── cleandata/
+│   ├── clean/
 │   │   ├── ai_hedging_clean_participants.csv
 │   │   ├── ai_hedging_clean_trials_long.csv
 │   │   ├── ai_hedging_clean_interviews.csv
@@ -336,7 +336,7 @@ https://ai-hedging-backend.onrender.com/api/download-interviews-csv
 The exported files were downloaded locally from the server and then used as the basis for the cleaned datasets in:
 
 ```text
-data/cleandata/
+data/clean/
 ```
 
 The raw export includes, where applicable:
@@ -412,7 +412,7 @@ The cleaning and preparation process consisted of the following steps:
    Participant-level metadata and questionnaire data were extracted and structured into:
 
    ```text
-   data/cleandata/ai_hedging_clean_participants.csv
+   data/clean/ai_hedging_clean_participants.csv
    ```
 
    This file contains one row per participant and includes condition assignment, hedging condition, modality condition, manipulation-check responses, trust responses, NASA-TLX workload responses, UEQ responses, post-task responses, and participant-level summary measures.
@@ -422,7 +422,7 @@ The cleaning and preparation process consisted of the following steps:
    Trial logs were extracted and converted into long format, resulting in:
 
    ```text
-   data/cleandata/ai_hedging_clean_trials_long.csv
+   data/clean/ai_hedging_clean_trials_long.csv
    ```
 
    This file contains one row per participant-trial combination. It is the main dataset for the behavioural analyses. It includes item ID, block number, trial index, answer correctness, displayed answer, hedge phrase, hedge type, verification behaviour, evidence panel usage, final decision, decision time, and final accuracy.
@@ -432,7 +432,7 @@ The cleaning and preparation process consisted of the following steps:
    Open-text reflection and interview-style responses were extracted and stored in:
 
    ```text
-   data/cleandata/ai_hedging_clean_interviews.csv
+   data/clean/ai_hedging_clean_interviews.csv
    ```
 
    This file contains participant-level qualitative responses used to support the interpretation of the behavioural results.
@@ -442,8 +442,8 @@ The cleaning and preparation process consisted of the following steps:
    Condition-level and block-level summary datasets were created for descriptive analysis and reporting:
 
    ```text
-   data/cleandata/ai_hedging_condition_summary.csv
-   data/cleandata/ai_hedging_block_summary.csv
+   data/clean/ai_hedging_condition_summary.csv
+   data/clean/ai_hedging_block_summary.csv
    ```
 
    The condition summary file contains descriptive statistics per experimental condition. The block summary file contains descriptive statistics across the three repeated interaction blocks.
@@ -453,7 +453,7 @@ The cleaning and preparation process consisted of the following steps:
    Variable names, labels, and coding conventions were documented in:
 
    ```text
-   data/cleandata/ai_hedging_data_dictionary.csv
+   data/clean/ai_hedging_data_dictionary.csv
    ```
 
    This file explains the main variables used in the cleaned datasets and should be consulted before reproducing the analysis.
@@ -475,7 +475,7 @@ The final cleaned data files are therefore derived from the backend/server expor
 The cleaned data files are stored in:
 
 ```text
-data/cleandata/
+data/clean/
 ```
 
 The cleaned data files are:
@@ -649,7 +649,7 @@ To reproduce the analysis, run `Data Analyse Defi.ipynb` from top to bottom.
 The notebook assumes that the cleaned CSV files are available in:
 
 ```text
-data/cleandata/
+data/clean/
 ```
 
 ---
@@ -718,13 +718,13 @@ To reproduce the final reported analysis:
 1. Open the cleaned data folder:
 
    ```text
-   data/cleandata/
+   data/clean/
    ```
 
 2. Review the data dictionary:
 
    ```text
-   data/cleandata/ai_hedging_data_dictionary.csv
+   data/clean/ai_hedging_data_dictionary.csv
    ```
 
 3. Open the final analysis notebook:
@@ -744,7 +744,7 @@ To reproduce the final reported analysis:
 The original data collection exports were obtained from the backend/server using the download routes listed in the **Data storage and export** section. For the final thesis analysis, the relevant exported data were stored locally and processed into the cleaned CSV files in:
 
 ```text
-data/cleandata/
+data/clean/
 ```
 
 The final analysis does not require live access to the backend server.
@@ -841,7 +841,7 @@ The definitive analysis route for this thesis submission is:
 ```text
 backend/server exports
 → local raw and structured exports
-→ data/cleandata/
+→ data/clean/
 → data/scripts/Data Analyse Defi.ipynb
 → analysis_outputs/figures/
 ```
