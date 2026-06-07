@@ -378,7 +378,7 @@ Where applicable, information not required for reproducing the analysis was remo
 
 ## From raw data to cleaned data
 
-The cleaned data files were created from the backend/server exports. The cleaning process was performed in the final analysis workflow and documented through the final notebook:
+The cleaned data files were created from the backend/server exports. The cleaning process was documented alongside the final analysis workflow. The final analysis notebook uses the cleaned CSV files to reproduce the analyses and figures reported in the thesis.
 
 ```text
 data/scripts/Data Analyse Defi.ipynb
