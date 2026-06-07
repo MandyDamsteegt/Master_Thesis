@@ -19,7 +19,7 @@ prototype/executable/index.html
 The final data analysis reported in the thesis was conducted using:
 
 ```text
-data/scripts/Data Analyse Defi.ipynb
+data/scripts/Data Analyse Defi (4).ipynb
 ```
 
 ---
@@ -90,7 +90,7 @@ The final sample consisted of **72 participants**, with **18 participants per co
 │   │   └── ai_hedging_data_dictionary.csv
 │   │
 │   └── scripts/
-│       └── Data Analyse Defi.ipynb
+│       └── Data Analyse Defi (4).ipynb
 │
 ├── analysis_outputs/
 │   └── figures/
@@ -381,7 +381,7 @@ Where applicable, information not required for reproducing the analysis was remo
 The cleaned data files were created from the backend/server exports. The cleaning process was documented alongside the final analysis workflow. The final analysis notebook uses the cleaned CSV files to reproduce the analyses and figures reported in the thesis.
 
 ```text
-data/scripts/Data Analyse Defi.ipynb
+data/scripts/Data Analyse Defi (4).ipynb
 ```
 
 The cleaning and preparation process consisted of the following steps:
@@ -460,7 +460,7 @@ The cleaning and preparation process consisted of the following steps:
 
 10. **Generating the final figures**
 
-   The cleaned datasets were used in `Data Analyse Defi.ipynb` to generate the final figures stored in:
+   The cleaned datasets were used in `Data Analyse Defi (4).ipynb` to generate the final figures stored in:
 
    ```text
    analysis_outputs/figures/
@@ -625,7 +625,7 @@ This file should be consulted before reproducing the analysis.
 The final analysis was conducted in:
 
 ```text
-data/scripts/Data Analyse Defi.ipynb
+data/scripts/Data Analyse Defi (4).ipynb
 ```
 
 This notebook loads the cleaned datasets, performs the final descriptive and inferential analyses, and generates the figures used in the thesis.
@@ -644,7 +644,7 @@ The notebook performs the final analysis steps, including:
 10. Calculating verification and final accuracy patterns across blocks.
 11. Generating the final figures used in the thesis.
 
-To reproduce the analysis, run `Data Analyse Defi.ipynb` from top to bottom.
+To reproduce the analysis, run `Data Analyse Defi (4).ipynb` from top to bottom.
 
 The notebook assumes that the cleaned CSV files are available in:
 
@@ -730,7 +730,7 @@ To reproduce the final reported analysis:
 3. Open the final analysis notebook:
 
    ```text
-   data/scripts/Data Analyse Defi.ipynb
+   data/scripts/Data Analyse Defi (4).ipynb
    ```
 
 4. Run the notebook from top to bottom.
@@ -772,7 +772,7 @@ prototype/executable/index.html
 ```text
 No participants were excluded from the final dataset. The final sample consisted of 72 participants, with 18 participants per condition. Each participant completed 30 main trials, resulting in 2160 trial-level observations.
 
-The final analysis reported in the thesis was conducted using `Data Analyse Defi.ipynb`. The figures in `analysis_outputs/figures/` were generated from this final analysis notebook.
+The final analysis reported in the thesis was conducted using `Data Analyse Defi (4).ipynb`. The figures in `analysis_outputs/figures/` were generated from this final analysis notebook.
 ```
 
 ---
@@ -842,6 +842,6 @@ The definitive analysis route for this thesis submission is:
 backend/server exports
 → local raw and structured exports
 → data/clean/
-→ data/scripts/Data Analyse Defi.ipynb
+→ data/scripts/Data Analyse Defi (4).ipynb
 → analysis_outputs/figures/
 ```
